@@ -2,9 +2,9 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import reactCSS from 'reactcss'
 
-import { Swatch } from '../common'
+import { SwatchWrap, Swatch } from '../common'
 
-export const SketchPresetColors = ({ colors, onClick = () => {}, onSwatchHover }) => {
+export const SketchPresetColors = ({ colors, onClick = () => {}, onSwatchHover, onSwatchRemove }) => {
   const styles = reactCSS({
     'default': {
       colors: {
@@ -40,15 +40,20 @@ export const SketchPresetColors = ({ colors, onClick = () => {}, onSwatchHover }
       source: 'hex',
     }, e)
   }
-
+  
+  const handleRemove = (colorIndex, event) => {
+    console.log(colorIndex)
+    onSwatchRemove && onSwatchRemove(colorIndex, event)
+  }
+  
   return (
     <div style={ styles.colors } className="flexbox-fix">
-      { colors.map((colorObjOrString) => {
+      { colors.map((colorObjOrString, index) => {
         const c = typeof colorObjOrString === 'string'
         ? { color: colorObjOrString }
           : colorObjOrString
         return (
-          <div key={ c.color } style={ styles.swatchWrap }>
+          <div key={ c.color } style={ styles.swatchWrap } onContextMenu={ handleRemove(index) }>
             <Swatch
               { ...c }
               style={ styles.swatch }
@@ -74,4 +79,4 @@ SketchPresetColors.propTypes = {
   )),
 }
 
-export default SketchPresetColors
+export default SwatchWrap(SketchPresetColors)

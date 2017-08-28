@@ -13,3 +13,4 @@ export { default as SwatchesPicker } from './components/swatches/Swatches'
 export { default as TwitterPicker } from './components/twitter/Twitter'
 
 export { default as CustomPicker } from './components/common/ColorWrap'
+export { default as CustomPalette } from './components/common/SwatchWrap'

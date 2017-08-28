@@ -32,27 +32,12 @@ export const ColorWrap = (Picker) => {
       }
     }
 
-    handleSwatchHover = (data, event) => {
-      const isValidColor = color.simpleCheckForValidColor(data)
-      if (isValidColor) {
-        const colors = color.toState(data, data.h || this.state.oldHue)
-        this.setState(colors)
-        this.props.onSwatchHover && this.props.onSwatchHover(colors, event)
-      }
-    }
-
     render() {
-      const optionalEvents = {}
-      if (this.props.onSwatchHover) {
-        optionalEvents.onSwatchHover = this.handleSwatchHover
-      }
-
       return (
         <Picker
           { ...this.props }
           { ...this.state }
           onChange={ this.handleChange }
-          { ...optionalEvents }
         />
       )
     }
