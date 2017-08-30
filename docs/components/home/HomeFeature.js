@@ -16,13 +16,20 @@ class HomeFeature extends React.Component {
     super()
 
     this.state = {
-      h: 150,
-      s: 0.50,
-      l: 0.20,
-      a: 1,
+      hsl: {
+        h: 150,
+        s: 0.50,
+        l: 0.20,
+        a: 1,
+      },
+      palette: {
+        colors: ['#C0FFEE','#4A90E2',],
+        presetColors: ['#C0FFEE','#4A90E2', '#50E3C2', '#B8E986', '#000000', '#4A4A4A', '#9B9B9B', '#FFFFFF'],
+      }
     }
 
     this.handleChangeComplete = this.handleChangeComplete.bind(this)
+    this.handlePaletteChange = this.handlePaletteChange.bind(this)
   }
 
   componentDidMount() {
@@ -38,10 +45,19 @@ class HomeFeature extends React.Component {
   handleChangeComplete(data) {
     // console.log(data);
     if (data.hsl !== this.state) {
-      this.setState(data.hsl)
+      this.setState({hsl: data.hsl})
     }
 
     this.props.onChange && this.props.onChange(data.hex)
+  }
+  
+  handlePaletteChange(data) {
+    // console.log(data)
+    if (data !== this.state.palette.colors) {
+      this.setState({palette: {colors: data}})
+    }
+    
+    this.props.onChange && this.props.onChange(data)
   }
 
   render() {
@@ -82,7 +98,6 @@ class HomeFeature extends React.Component {
           paddingTop: '25px',
           paddingBottom: '20px',
         },
-
         chrome: {
           paddingTop: '50px',
           position: 'relative',
@@ -107,16 +122,13 @@ class HomeFeature extends React.Component {
           width: '100%',
           marginTop: '40px',
         },
-
         under: {
           paddingTop: '133px',
         },
-
         slider: {
           paddingTop: '10px',
           position: 'relative',
         },
-
         split: {
           display: 'flex',
           justifyContent: 'space-between',
@@ -125,7 +137,6 @@ class HomeFeature extends React.Component {
           bottom: '0px',
           width: '100%',
         },
-
         label: {
           textAlign: 'center',
           position: 'absolute',
@@ -145,7 +156,6 @@ class HomeFeature extends React.Component {
         second: {
           marginTop: '50px',
         },
-
         github: {
           float: 'left',
           position: 'relative',
@@ -199,7 +209,7 @@ class HomeFeature extends React.Component {
                   inEndTransform="translateY(0)"
                 >
                   <ChromePicker
-                    color={ this.state }
+                    color={ this.state.hsl }
                     onChangeComplete={ this.handleChangeComplete }
                   />
                   <div style={ styles.whiteLabel }>Chrome</div>
@@ -215,14 +225,18 @@ class HomeFeature extends React.Component {
                 <Grid preset="two">
                   <div style={ styles.sketch }>
                     <SketchPicker
-                      color={ this.state }
+                      color={ this.state.hsl }
+                      colors={ this.state.palette.colors }
+                      presetColors={ this.state.palette.presetColors }
                       onChangeComplete={ this.handleChangeComplete }
+                      onPaletteChange={ this.handlePaletteChange }
+                      enableCustomPalette
                     />
                     <div style={ styles.label }>Sketch</div>
                   </div>
                   <div style={ styles.photoshop }>
                     <PhotoshopPicker
-                      color={ this.state }
+                      color={ this.state.hsl }
                       onChangeComplete={ this.handleChangeComplete }
                     />
                     <div style={ styles.label }>Photoshop</div>
@@ -244,7 +258,7 @@ class HomeFeature extends React.Component {
               <Grid preset="four">
                 <div style={ styles.block }>
                   <BlockPicker
-                    color={ this.state }
+                    color={ this.state.hsl }
                     onChangeComplete={ this.handleChangeComplete }
                   />
                   <div style={ styles.label }>Block</div>
@@ -253,7 +267,7 @@ class HomeFeature extends React.Component {
                   <div style={ styles.top }>
                     <div style={ styles.github }>
                       <GithubPicker
-                        color={ this.state }
+                        color={ this.state.hsl }
                         onChangeComplete={ this.handleChangeComplete }
                         triangle="top-right"
                       />
@@ -262,13 +276,13 @@ class HomeFeature extends React.Component {
 
                     <div style={ styles.huealpha }>
                       <HuePicker
-                        color={ this.state }
+                        color={ this.state.hsl }
                         onChangeComplete={ this.handleChangeComplete }
                       />
                       <div style={ styles.label }>Hue</div>
                       <div style={ styles.spacer } />
                       <AlphaPicker
-                        color={ this.state }
+                        color={ this.state.hsl }
                         onChangeComplete={ this.handleChangeComplete }
                       />
                       <div style={ styles.label }>Alpha</div>
@@ -279,7 +293,7 @@ class HomeFeature extends React.Component {
                   <div style={ styles.bottom }>
                     <div style={ styles.twitter }>
                       <TwitterPicker
-                        color={ this.state }
+                        color={ this.state.hsl }
                         onChangeComplete={ this.handleChangeComplete }
                         triangle="top-right"
                       />
@@ -287,7 +301,7 @@ class HomeFeature extends React.Component {
                     </div>
                     <div style={ styles.circle }>
                       <CirclePicker
-                        color={ this.state }
+                        color={ this.state.hsl }
                         onChangeComplete={ this.handleChangeComplete }
                       />
                       <div style={ styles.label }>Circle</div>
@@ -307,7 +321,7 @@ class HomeFeature extends React.Component {
               <div style={ styles.group }>
                 <div style={ styles.slider }>
                   <SliderPicker
-                    color={ this.state }
+                    color={ this.state.hsl }
                     onChangeComplete={ this.handleChangeComplete }
                   />
                   <div style={ styles.label }>Slider</div>
@@ -315,14 +329,14 @@ class HomeFeature extends React.Component {
                 <div style={ styles.split } className="flexbox-fix">
                   <div style={ styles.compact }>
                     <CompactPicker
-                      color={ this.state }
+                      color={ this.state.hsl }
                       onChangeComplete={ this.handleChangeComplete }
                     />
                     <div style={ styles.label }>Compact</div>
                   </div>
                   <div style={ styles.material }>
                     <MaterialPicker
-                      color={ this.state }
+                      color={ this.state.hsl }
                       onChangeComplete={ this.handleChangeComplete }
                     />
                     <div style={ styles.label }>Material</div>
@@ -331,7 +345,7 @@ class HomeFeature extends React.Component {
               </div>
               <div style={ styles.swatches }>
                 <SwatchesPicker
-                  color={ this.state }
+                  color={ this.state.hsl }
                   onChangeComplete={ this.handleChangeComplete }
                 />
                 <div style={ styles.label }>Swatches</div>

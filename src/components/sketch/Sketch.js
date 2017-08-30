@@ -2,12 +2,11 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import reactCSS from 'reactcss'
 
-import { ColorWrap, Saturation, Hue, Alpha, Checkboard } from '../common'
+import { ColorWrap, Saturation, Hue, Alpha, Checkboard, Palette } from '../common'
 import SketchFields from './SketchFields'
-import SketchPresetColors from './SketchPresetColors'
 
-export const Sketch = ({ width, rgb, hex, hsv, hsl, onChange, onSwatchHover, onSwatchRemove,
-  disableAlpha, disablePalette, palette, presetPalette, renderers }) => {
+export const Sketch = ({ width, rgb, hex, hsv, hsl, colors, presetColors, onChange, onPaletteChange, onSwatchHover,
+  disableAlpha, disablePalette, enableCustomPalette,  renderers }) => {
   const styles = reactCSS({
     'default': {
       picker: {
@@ -58,7 +57,6 @@ export const Sketch = ({ width, rgb, hex, hsv, hsl, onChange, onSwatchHover, onS
         radius: '2px',
         shadow: 'inset 0 0 0 1px rgba(0,0,0,.15), inset 0 0 4px rgba(0,0,0,.25)',
       },
-
       alpha: {
         position: 'relative',
         height: '10px',
@@ -69,6 +67,15 @@ export const Sketch = ({ width, rgb, hex, hsv, hsl, onChange, onSwatchHover, onS
         radius: '2px',
         shadow: 'inset 0 0 0 1px rgba(0,0,0,.15), inset 0 0 4px rgba(0,0,0,.25)',
       },
+      colors: {
+        paddingTop: '10px',
+      },
+      swatch: {
+        height: '16px',
+        width: '16px',
+        margin: '0 1px 1px 0',
+        borderRadius: '3px',
+      }
     },
     'disableAlpha': {
       color: {
@@ -117,7 +124,6 @@ export const Sketch = ({ width, rgb, hex, hsv, hsl, onChange, onSwatchHover, onS
           <div style={ styles.activeColor } />
         </div>
       </div>
-
       <SketchFields
         rgb={ rgb }
         hsl={ hsl }
@@ -125,26 +131,39 @@ export const Sketch = ({ width, rgb, hex, hsv, hsl, onChange, onSwatchHover, onS
         onChange={ onChange }
         disableAlpha={ disableAlpha }
       />
-      <SketchPresetColors
-        colors={ palette }
-        presetPalette={ presetPalette }
+      {!disablePalette &&
+      <Palette
+        color={ hex }
+        colors={ colors }
+        presetColors={ presetColors }
+        colorsStyle={ styles.colors }
+        swatchStyle={ styles.swatch }
         onClick={ onChange }
         onSwatchHover={ onSwatchHover }
-        onSwatchRemove={ onSwatchRemove }
-        disablePalette={ disablePalette }
+        onPaletteChange={ onPaletteChange }
+        enableCustomPalette={ enableCustomPalette }
       />
+      }
     </div>
   )
 }
 
 Sketch.propTypes = {
   disableAlpha: PropTypes.bool,
+  disablePalette: PropTypes.bool,
   width: PropTypes.number,
-  presetPalette: PropTypes.arrayOf(PropTypes.string),
+  presetColors: PropTypes.arrayOf(PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.shape({
+      color: PropTypes.string,
+      title: PropTypes.string,
+    })
+  ])),
 }
 
 Sketch.defaultProps = {
   disableAlpha: false,
+  disablePalette: false,
   width: 200,
 }
 
