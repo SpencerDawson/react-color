@@ -75,6 +75,7 @@ export const Sketch = ({ width, rgb, hex, hsv, hsl, customColors, presetColors, 
       },
       swatch: {
         borderRadius: '3px',
+        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.15)'
       }
     },
     'disableAlpha': {

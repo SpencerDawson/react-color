@@ -26,10 +26,6 @@ export const Palette = ({ color, colors, presetColors, swatchesPerRow, swatchSpa
       },
       swatch: {
         position: 'absolute',
-        top: '0',
-        bottom: '0',
-        left: '0',
-        right: '0',
         ...swatchStyle
       }
     }
@@ -93,7 +89,7 @@ export const Palette = ({ color, colors, presetColors, swatchesPerRow, swatchSpa
           <div
             style={{ ...styles.swatchContainer, cursor: 'pointer' }}
             onClick={ handleAdd }>
-            <svg style={ styles.swatch } viewBox="0 0 24 24">
+            <svg style={{ ...styles.swatch, boxShadow: '0 0 0 0' }} viewBox="0 0 24 24">
               <path d="m23,10h-8.5c-0.3,0-0.5-0.2-0.5-0.5v-8.5c0-0.6-0.4-1-1-1h-2c-0.6,0-1,0.4-1,1v8.5c0,0.3-0.2,0.5-0.5,0.5h-8.5c-0.6,0-1,0.4-1,1v2c0,0.6 0.4,1 1,1h8.5c0.3,0 0.5,0.2 0.5,0.5v8.5c0,0.6 0.4,1 1,1h2c0.6,0 1-0.4 1-1v-8.5c0-0.3 0.2-0.5 0.5-0.5h8.5c0.6,0 1-0.4 1-1v-2c0-0.6-0.4-1-1-1z"
                     fill="#ddd"/>
             </svg>
