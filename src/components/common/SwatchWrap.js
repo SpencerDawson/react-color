@@ -1,4 +1,5 @@
 import React, { Component, PureComponent } from 'react'
+import PropTypes from 'prop-types'
 import palette from '../../helpers/palette'
 
 export const SwatchWrap = (Palette) => {
@@ -13,17 +14,18 @@ export const SwatchWrap = (Palette) => {
     }
 
     componentWillReceiveProps(nextProps) {
-      this.setState({
-        colors: nextProps.colors,
-      })
+      if(this.props.enableCustomPalette){
+        this.setState({
+          colors: nextProps.colors,
+        })
+      }
     }
 
     handlePaletteChange = (data, event) => {
-      const paletteChanged = palette.compare(data, this.props.colors)
-      console.log(data)
-      this.setState({colors: data})
-      this.props.onPaletteChange && this.props.onPaletteChange(data, event)
+      const paletteChanged = !palette.compare(data, this.props.colors)
       if (paletteChanged) {
+        this.setState({colors: data})
+        this.props.onPaletteChange && this.props.onPaletteChange(data, event)
       }
     }
 
@@ -33,19 +35,31 @@ export const SwatchWrap = (Palette) => {
         optionalEvents.onPaletteChange = this.handlePaletteChange
       }
       return (
-        <div ref='paletteRef'>
-          <Palette
-            { ...this.props }
-            { ...this.state }
-            { ...optionalEvents }
-          />
-        </div>
+        <Palette
+          { ...this.props }
+          { ...this.state }
+          { ...optionalEvents }
+        />
       )
     }
   }
 
   SwatchPalette.propTypes = {
     ...Palette.propTypes,
+    colors: PropTypes.arrayOf(PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        color: PropTypes.string,
+        title: PropTypes.string,
+      })]
+    )),
+    presetColors: PropTypes.arrayOf(PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        color: PropTypes.string,
+        title: PropTypes.string,
+      })
+    ])),
   }
 
   SwatchPalette.defaultProps = {

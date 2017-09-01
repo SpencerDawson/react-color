@@ -1,32 +1,38 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import reactCSS from 'reactcss'
+import reactCSS, { loop } from 'reactcss'
 
 import SwatchWrap from './SwatchWrap'
 import Swatch from './Swatch'
 
-export const Palette = ({ color, colors, presetColors, swatchesPerRow, colorsStyle, swatchStyle, onClick = () => {}, onPaletteChange, onSwatchHover, enableCustomPalette }) => {
+export const Palette = ({ color, colors, presetColors, swatchesPerRow, swatchSpacing, colorsStyle, swatchStyle, onClick = () => {}, onPaletteChange, onSwatchHover, enableCustomPalette }) => {
   const styles = reactCSS({
     'default': {
       colors: {
         display: 'flex',
         flexWrap: 'wrap',
-        position: 'relative',
         ...colorsStyle
       },
-      swatch: {
-        height: '100%',
-        width: '100%',
-        margin: '0 3px 3px 0',
-        borderRadius: '3px',
-        ...swatchStyle
+      swatchContainer: {
+        display: 'inline-flex',
+        position: 'relative',
+        width: `calc((100% - ${swatchSpacing*swatchesPerRow}px) / ${swatchesPerRow})`,
+        margin: `0 ${swatchSpacing}px ${swatchSpacing}px 0`,
       },
-      swatchAdd: {
-        height: swatchStyle.height || '100%',
-        width: swatchStyle.width || '100%',
-        margin: swatchStyle.margin || '0 3px 3px 0',
+      after: {
+        content: '',
+        display: 'flex',
+        marginTop: '100%',
+      },
+      swatch: {
+        position: 'absolute',
+        top: '0',
+        bottom: '0',
+        left: '0',
+        right: '0',
+        ...swatchStyle
       }
-    },
+    }
   }, {})
   
   const handleClick = (hex, e) => {
@@ -50,10 +56,11 @@ export const Palette = ({ color, colors, presetColors, swatchesPerRow, colorsSty
     onPaletteChange && onPaletteChange(newPalette, e)
   }
   
-  const PaletteItem = (index, c, allowRemove=false) => {
+  const PaletteItem = (index, c, count, allowRemove=false) => {
     return (
       <div
         key={`item-${index}`}
+        style={ styles.swatchContainer }
         onContextMenu={ allowRemove ? (e) => handleRemove(index, e) : () => {} }
       >
         <Swatch
@@ -64,7 +71,9 @@ export const Palette = ({ color, colors, presetColors, swatchesPerRow, colorsSty
           focusStyle={{
             boxShadow: `inset 0 0 0 1px rgba(0,0,0,.15), 0 0 4px ${ c.color }`,
           }}
+          { ...loop(index, count) }
         />
+        <div style={ styles.after } />
       </div>
     )
   }
@@ -72,22 +81,23 @@ export const Palette = ({ color, colors, presetColors, swatchesPerRow, colorsSty
   const PaletteElement = (colors, isCustom=false) => {
     const showPalette = (!isCustom && (!presetColors || !presetColors.length))?{display: none}:{}
     return (
-      <div className="flexbox-fix" style={showPalette}>
+      <div style={showPalette}>
         <div style={ styles.colors }>
-          {colors.map((colorObjOrString, index) => {
+          {colors.map((colorObjOrString, index, items) => {
             const c = typeof colorObjOrString === 'string'
               ? { color: colorObjOrString }
               : colorObjOrString
-            return (PaletteItem(index, c, isCustom))
+            return (PaletteItem(index, c, items.length, isCustom))
           })}
           { isCustom &&
           <div
-            style={ styles.swatchAdd }
+            style={{ ...styles.swatchContainer, cursor: 'pointer' }}
             onClick={ handleAdd }>
-            <svg viewBox="0 0 24 24">
+            <svg style={ styles.swatch } viewBox="0 0 24 24">
               <path d="m23,10h-8.5c-0.3,0-0.5-0.2-0.5-0.5v-8.5c0-0.6-0.4-1-1-1h-2c-0.6,0-1,0.4-1,1v8.5c0,0.3-0.2,0.5-0.5,0.5h-8.5c-0.6,0-1,0.4-1,1v2c0,0.6 0.4,1 1,1h8.5c0.3,0 0.5,0.2 0.5,0.5v8.5c0,0.6 0.4,1 1,1h2c0.6,0 1-0.4 1-1v-8.5c0-0.3 0.2-0.5 0.5-0.5h8.5c0.6,0 1-0.4 1-1v-2c0-0.6-0.4-1-1-1z"
-                    fill="#555"/>
+                    fill="#ddd"/>
             </svg>
+            <div style={ styles.after } />
           </div>
           }
         </div>
@@ -105,19 +115,14 @@ export const Palette = ({ color, colors, presetColors, swatchesPerRow, colorsSty
 Palette.propTypes = {
   enableCustomPalette: PropTypes.bool,
   swatchesPerRow: PropTypes.number,
+  swatchSpacing: PropTypes.number,
   colorsStyle: PropTypes.object,
   swatchStyle: PropTypes.object,
-  colors: PropTypes.arrayOf(PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.shape({
-      color: PropTypes.string,
-      title: PropTypes.string,
-    })]
-  )),
 }
 Palette.defaultProps = {
   enableCustomPalette: false,
-  swatchesPerRow: 8
+  swatchesPerRow: 8,
+  swatchSpacing: 0
 }
 
 export default SwatchWrap(Palette)

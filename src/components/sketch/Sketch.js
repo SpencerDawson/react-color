@@ -5,13 +5,14 @@ import reactCSS from 'reactcss'
 import { ColorWrap, Saturation, Hue, Alpha, Checkboard, Palette } from '../common'
 import SketchFields from './SketchFields'
 
-export const Sketch = ({ width, rgb, hex, hsv, hsl, colors, presetColors, onChange, onPaletteChange, onSwatchHover,
-  disableAlpha, disablePalette, enableCustomPalette,  renderers }) => {
+export const Sketch = ({ width, rgb, hex, hsv, hsl, customColors, presetColors, onChange, onPaletteChange, onSwatchHover,
+  disableAlpha, disablePalette, enableCustomPalette, renderers }) => {
+  const padding = 10
   const styles = reactCSS({
     'default': {
       picker: {
         width,
-        padding: '10px 10px 0',
+        padding: `${padding}px ${padding}px 0`,
         boxSizing: 'initial',
         background: '#fff',
         borderRadius: '4px',
@@ -68,12 +69,11 @@ export const Sketch = ({ width, rgb, hex, hsv, hsl, colors, presetColors, onChan
         shadow: 'inset 0 0 0 1px rgba(0,0,0,.15), inset 0 0 4px rgba(0,0,0,.25)',
       },
       colors: {
-        paddingTop: '10px',
+        borderTop: '1px solid #eee',
+        margin: `0 -${padding}px`,
+        padding: `${padding}px ${padding}px 0`,
       },
       swatch: {
-        height: '16px',
-        width: '16px',
-        margin: '0 1px 1px 0',
         borderRadius: '3px',
       }
     },
@@ -134,8 +134,10 @@ export const Sketch = ({ width, rgb, hex, hsv, hsl, colors, presetColors, onChan
       {!disablePalette &&
       <Palette
         color={ hex }
-        colors={ colors }
+        colors={ customColors }
         presetColors={ presetColors }
+        swatchesPerRow={ 8 }
+        swatchSpacing={ 8 }
         colorsStyle={ styles.colors }
         swatchStyle={ styles.swatch }
         onClick={ onChange }
@@ -152,13 +154,6 @@ Sketch.propTypes = {
   disableAlpha: PropTypes.bool,
   disablePalette: PropTypes.bool,
   width: PropTypes.number,
-  presetColors: PropTypes.arrayOf(PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.shape({
-      color: PropTypes.string,
-      title: PropTypes.string,
-    })
-  ])),
 }
 
 Sketch.defaultProps = {

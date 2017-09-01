@@ -23,9 +23,9 @@ class HomeFeature extends React.Component {
         a: 1,
       },
       palette: {
-        colors: ['#C0FFEE','#4A90E2',],
+        colors: [{color:'#C0FFEE',title:'Coffee Green'},{color:'#B4D455',title:'Badass Green'},],
         presetColors: ['#C0FFEE','#4A90E2', '#50E3C2', '#B8E986', '#000000', '#4A4A4A', '#9B9B9B', '#FFFFFF'],
-      }
+      },
     }
 
     this.handleChangeComplete = this.handleChangeComplete.bind(this)
@@ -226,7 +226,7 @@ class HomeFeature extends React.Component {
                   <div style={ styles.sketch }>
                     <SketchPicker
                       color={ this.state.hsl }
-                      colors={ this.state.palette.colors }
+                      customColors={ this.state.palette.colors }
                       presetColors={ this.state.palette.presetColors }
                       onChangeComplete={ this.handleChangeComplete }
                       onPaletteChange={ this.handlePaletteChange }

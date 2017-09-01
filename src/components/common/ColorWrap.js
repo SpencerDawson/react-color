@@ -9,7 +9,6 @@ export const ColorWrap = (Picker) => {
 
       this.state = {
         ...color.toState(props.color, 0),
-        colors: props.colors
       }
 
       this.debounce = debounce((fn, data, event) => {
@@ -18,16 +17,9 @@ export const ColorWrap = (Picker) => {
     }
 
     componentWillReceiveProps(nextProps) {
-      if (!this.props.disablePalette && this.props.enableCustomPalette) {
-        this.setState({
-          ...color.toState(nextProps.color, this.state.oldHue),
-          colors: nextProps.colors
-        })
-      } else {
-        this.setState({
-          ...color.toState(nextProps.color, this.state.oldHue),
-        })
-      }
+      this.setState({
+        ...color.toState(nextProps.color, this.state.oldHue),
+      })
     }
 
     handleChange = (data, event) => {
