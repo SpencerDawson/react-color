@@ -79,7 +79,7 @@ export const Palette = ({ color, colors, presetColors, swatchesPerRow, swatchSpa
   }
   
   const PaletteElement = (colors, isCustom=false) => {
-    const showPalette = (!isCustom && (!presetColors || !presetColors.length))?{display: none}:{}
+    const showPalette = (!isCustom && (!presetColors || !presetColors.length))?{display: 'none'}:{}
     return (
       <div style={showPalette}>
         <div style={ styles.colors }>
