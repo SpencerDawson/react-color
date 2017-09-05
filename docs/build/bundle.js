@@ -658,45 +658,43 @@
 	var warning = emptyFunction;
 
 	if (false) {
-	  (function () {
-	    var printWarning = function printWarning(format) {
-	      for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-	        args[_key - 1] = arguments[_key];
+	  var printWarning = function printWarning(format) {
+	    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+	      args[_key - 1] = arguments[_key];
+	    }
+
+	    var argIndex = 0;
+	    var message = 'Warning: ' + format.replace(/%s/g, function () {
+	      return args[argIndex++];
+	    });
+	    if (typeof console !== 'undefined') {
+	      console.error(message);
+	    }
+	    try {
+	      // --- Welcome to debugging React ---
+	      // This error was thrown as a convenience so that you can use this stack
+	      // to find the callsite that caused this warning to fire.
+	      throw new Error(message);
+	    } catch (x) {}
+	  };
+
+	  warning = function warning(condition, format) {
+	    if (format === undefined) {
+	      throw new Error('`warning(condition, format, ...args)` requires a warning ' + 'message argument');
+	    }
+
+	    if (format.indexOf('Failed Composite propType: ') === 0) {
+	      return; // Ignore CompositeComponent proptype check.
+	    }
+
+	    if (!condition) {
+	      for (var _len2 = arguments.length, args = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
+	        args[_key2 - 2] = arguments[_key2];
 	      }
 
-	      var argIndex = 0;
-	      var message = 'Warning: ' + format.replace(/%s/g, function () {
-	        return args[argIndex++];
-	      });
-	      if (typeof console !== 'undefined') {
-	        console.error(message);
-	      }
-	      try {
-	        // --- Welcome to debugging React ---
-	        // This error was thrown as a convenience so that you can use this stack
-	        // to find the callsite that caused this warning to fire.
-	        throw new Error(message);
-	      } catch (x) {}
-	    };
-
-	    warning = function warning(condition, format) {
-	      if (format === undefined) {
-	        throw new Error('`warning(condition, format, ...args)` requires a warning ' + 'message argument');
-	      }
-
-	      if (format.indexOf('Failed Composite propType: ') === 0) {
-	        return; // Ignore CompositeComponent proptype check.
-	      }
-
-	      if (!condition) {
-	        for (var _len2 = arguments.length, args = Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
-	          args[_key2 - 2] = arguments[_key2];
-	        }
-
-	        printWarning.apply(undefined, [format].concat(args));
-	      }
-	    };
-	  })();
+	      printWarning.apply(undefined, [format].concat(args));
+	    }
+	  };
 	}
 
 	module.exports = warning;
@@ -1124,7 +1122,7 @@
 
 /***/ }),
 /* 15 */
-[443, 6],
+[445, 6],
 /* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2257,8 +2255,9 @@
 	        // check, but we can offer a more precise error message here rather than
 	        // 'of type `object`'.
 	        var preciseType = getPreciseType(propValue);
-
-	        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + preciseType + '` supplied to `' + componentName + '`, expected ') + ('`' + expectedType + '`.'));
+	        const error = new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + preciseType + '` supplied to `' + componentName + '`, expected ') + ('`' + expectedType + '`.'))
+	        error.type = expectedType
+	        return error;
 	      }
 	      return null;
 	    }
@@ -2277,7 +2276,10 @@
 	      var propValue = props[propName];
 	      if (!Array.isArray(propValue)) {
 	        var propType = getPropType(propValue);
-	        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an array.'));
+	        const error = new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an array.'))
+	        error.type = 'arrayOf'
+	        error.args = typeChecker
+	        return error;
 	      }
 	      for (var i = 0; i < propValue.length; i++) {
 	        var error = typeChecker(propValue, i, componentName, location, propFullName + '[' + i + ']', ReactPropTypesSecret);
@@ -2295,7 +2297,9 @@
 	      var propValue = props[propName];
 	      if (!isValidElement(propValue)) {
 	        var propType = getPropType(propValue);
-	        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected a single ReactElement.'));
+	        const error = new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected a single ReactElement.'))
+	        error.type = 'element'
+	        return error;
 	      }
 	      return null;
 	    }
@@ -2307,7 +2311,10 @@
 	      if (!(props[propName] instanceof expectedClass)) {
 	        var expectedClassName = expectedClass.name || ANONYMOUS;
 	        var actualClassName = getClassName(props[propName]);
-	        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + actualClassName + '` supplied to `' + componentName + '`, expected ') + ('instance of `' + expectedClassName + '`.'));
+	        const error = new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + actualClassName + '` supplied to `' + componentName + '`, expected ') + ('instance of `' + expectedClassName + '`.'));
+	        error.type = 'instanceOf'
+	        error.args = expectedClass
+	        return
 	      }
 	      return null;
 	    }
@@ -2329,7 +2336,10 @@
 	      }
 
 	      var valuesString = JSON.stringify(expectedValues);
-	      return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of value `' + propValue + '` ' + ('supplied to `' + componentName + '`, expected one of ' + valuesString + '.'));
+	      const error = new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of value `' + propValue + '` ' + ('supplied to `' + componentName + '`, expected one of ' + valuesString + '.'))
+	      error.type = 'enum'
+	      error.args = expectedValues
+	      return error;
 	    }
 	    return createChainableTypeChecker(validate);
 	  }
@@ -2342,12 +2352,17 @@
 	      var propValue = props[propName];
 	      var propType = getPropType(propValue);
 	      if (propType !== 'object') {
-	        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an object.'));
+	        const error = new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type ' + ('`' + propType + '` supplied to `' + componentName + '`, expected an object.'));
+	        error.type = 'objectOf'
+	        error.args = typeChecker
+	        return error;
 	      }
 	      for (var key in propValue) {
 	        if (propValue.hasOwnProperty(key)) {
 	          var error = typeChecker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret);
 	          if (error instanceof Error) {
+	            error.type = 'objectOf'
+	            error.args = typeChecker
 	            return error;
 	          }
 	        }
@@ -2368,7 +2383,7 @@
 	      if (typeof checker !== 'function') {
 	        warning(
 	          false,
-	          'Invalid argument supplid to oneOfType. Expected an array of check functions, but ' +
+	          'Invalid argument supplied to oneOfType. Expected an array of check functions, but ' +
 	          'received %s at index %s.',
 	          getPostfixForTypeWarning(checker),
 	          i
@@ -2384,8 +2399,10 @@
 	          return null;
 	        }
 	      }
-
-	      return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` supplied to ' + ('`' + componentName + '`.'));
+	      const error = new PropTypeError('Invalid ' + location + ' `' + propFullName + '` supplied to ' + ('`' + componentName + '`.'));
+	      error.type = 'oneOfType';
+	      error.args = arrayOfTypeCheckers;
+	      return error;
 	    }
 	    return createChainableTypeChecker(validate);
 	  }
@@ -2393,7 +2410,9 @@
 	  function createNodeChecker() {
 	    function validate(props, propName, componentName, location, propFullName) {
 	      if (!isNode(props[propName])) {
-	        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` supplied to ' + ('`' + componentName + '`, expected a ReactNode.'));
+	        const error = new PropTypeError('Invalid ' + location + ' `' + propFullName + '` supplied to ' + ('`' + componentName + '`, expected a ReactNode.'));
+	        error.type = 'node'
+	        return error
 	      }
 	      return null;
 	    }
@@ -2405,7 +2424,10 @@
 	      var propValue = props[propName];
 	      var propType = getPropType(propValue);
 	      if (propType !== 'object') {
-	        return new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type `' + propType + '` ' + ('supplied to `' + componentName + '`, expected `object`.'));
+	        const error = new PropTypeError('Invalid ' + location + ' `' + propFullName + '` of type `' + propType + '` ' + ('supplied to `' + componentName + '`, expected `object`.'));
+	        error.type = 'shape'
+	        error.args = shapeTypes
+	        return error;
 	      }
 	      for (var key in shapeTypes) {
 	        var checker = shapeTypes[key];
@@ -2414,6 +2436,8 @@
 	        }
 	        var error = checker(propValue, key, componentName, location, propFullName + '.' + key, ReactPropTypesSecret);
 	        if (error) {
+	          error.type = 'shape'
+	          error.args = shapeTypes
 	          return error;
 	        }
 	      }
@@ -2619,7 +2643,7 @@
 	        try {
 	          // This is intentionally an invariant that gets caught. It's the same
 	          // behavior as without this statement except with a better message.
-	          invariant(typeof typeSpecs[typeSpecName] === 'function', '%s: %s type `%s` is invalid; it must be a function, usually from ' + 'React.PropTypes.', componentName || 'React class', location, typeSpecName);
+	          invariant(typeof typeSpecs[typeSpecName] === 'function', '%s: %s type `%s` is invalid; it must be a function, usually from ' + 'the `prop-types` package.', componentName || 'React class', location, typeSpecName);
 	          error = typeSpecs[typeSpecName](values, typeSpecName, componentName, location, null, ReactPropTypesSecret);
 	        } catch (ex) {
 	          error = ex;
@@ -5944,7 +5968,7 @@
 
 /***/ }),
 /* 50 */
-[443, 35],
+[445, 35],
 /* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -17425,18 +17449,11 @@
 
 	/**
 	 * Copyright (c) 2013-present, Facebook, Inc.
+	 * All rights reserved.
 	 *
-	 * Licensed under the Apache License, Version 2.0 (the "License");
-	 * you may not use this file except in compliance with the License.
-	 * You may obtain a copy of the License at
-	 *
-	 * http://www.apache.org/licenses/LICENSE-2.0
-	 *
-	 * Unless required by applicable law or agreed to in writing, software
-	 * distributed under the License is distributed on an "AS IS" BASIS,
-	 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	 * See the License for the specific language governing permissions and
-	 * limitations under the License.
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @typechecks
 	 */
@@ -20480,7 +20497,7 @@
 
 	var _HomeFeature2 = _interopRequireDefault(_HomeFeature);
 
-	var _HomeDocumentation = __webpack_require__(410);
+	var _HomeDocumentation = __webpack_require__(412);
 
 	var _HomeDocumentation2 = _interopRequireDefault(_HomeDocumentation);
 
@@ -26181,9 +26198,9 @@
 
 	var _reactColor = __webpack_require__(339);
 
-	var _reactBasicLayout = __webpack_require__(405);
+	var _reactBasicLayout = __webpack_require__(407);
 
-	var _reactMove = __webpack_require__(408);
+	var _reactMove = __webpack_require__(410);
 
 	var _reactMove2 = _interopRequireDefault(_reactMove);
 
@@ -26204,13 +26221,20 @@
 	    var _this = _possibleConstructorReturn(this, (HomeFeature.__proto__ || Object.getPrototypeOf(HomeFeature)).call(this));
 
 	    _this.state = {
-	      h: 150,
-	      s: 0.50,
-	      l: 0.20,
-	      a: 1
+	      hsl: {
+	        h: 150,
+	        s: 0.50,
+	        l: 0.20,
+	        a: 1
+	      },
+	      palette: {
+	        colors: [],
+	        presetColors: ['#D0021B', '#F5A623', '#F8E71C', '#8B572A', '#7ED321', '#417505', '#BD10E0', '#9013FE', '#4A90E2', '#50E3C2', '#B8E986', '#000000', '#4A4A4A', '#9B9B9B', '#FFFFFF']
+	      }
 	    };
 
 	    _this.handleChangeComplete = _this.handleChangeComplete.bind(_this);
+	    _this.handlePaletteChange = _this.handlePaletteChange.bind(_this);
 	    return _this;
 	  }
 
@@ -26230,10 +26254,20 @@
 	    value: function handleChangeComplete(data) {
 	      // console.log(data);
 	      if (data.hsl !== this.state) {
-	        this.setState(data.hsl);
+	        this.setState({ hsl: data.hsl });
 	      }
 
 	      this.props.onChange && this.props.onChange(data.hex);
+	    }
+	  }, {
+	    key: 'handlePaletteChange',
+	    value: function handlePaletteChange(data) {
+	      // console.log(data)
+	      if (data !== this.state.palette.colors) {
+	        this.setState({ palette: { colors: data } });
+	      }
+
+	      this.props.onChange && this.props.onChange(data);
 	    }
 	  }, {
 	    key: 'render',
@@ -26275,7 +26309,6 @@
 	            paddingTop: '25px',
 	            paddingBottom: '20px'
 	          },
-
 	          chrome: {
 	            paddingTop: '50px',
 	            position: 'relative'
@@ -26300,16 +26333,13 @@
 	            width: '100%',
 	            marginTop: '40px'
 	          },
-
 	          under: {
 	            paddingTop: '133px'
 	          },
-
 	          slider: {
 	            paddingTop: '10px',
 	            position: 'relative'
 	          },
-
 	          split: {
 	            display: 'flex',
 	            justifyContent: 'space-between',
@@ -26318,7 +26348,6 @@
 	            bottom: '0px',
 	            width: '100%'
 	          },
-
 	          label: {
 	            textAlign: 'center',
 	            position: 'absolute',
@@ -26338,7 +26367,6 @@
 	          second: {
 	            marginTop: '50px'
 	          },
-
 	          github: {
 	            float: 'left',
 	            position: 'relative'
@@ -26411,7 +26439,7 @@
 	                    inEndTransform: 'translateY(0)'
 	                  },
 	                  _react2.default.createElement(_reactColor.ChromePicker, {
-	                    color: this.state,
+	                    color: this.state.hsl,
 	                    onChangeComplete: this.handleChangeComplete
 	                  }),
 	                  _react2.default.createElement(
@@ -26439,8 +26467,12 @@
 	                    'div',
 	                    { style: styles.sketch },
 	                    _react2.default.createElement(_reactColor.SketchPicker, {
-	                      color: this.state,
-	                      onChangeComplete: this.handleChangeComplete
+	                      color: this.state.hsl,
+	                      customColors: this.state.palette.colors,
+	                      presetColors: this.state.palette.presetColors,
+	                      onChangeComplete: this.handleChangeComplete,
+	                      onPaletteChange: this.handlePaletteChange,
+	                      enableCustomPalette: true
 	                    }),
 	                    _react2.default.createElement(
 	                      'div',
@@ -26452,7 +26484,7 @@
 	                    'div',
 	                    { style: styles.photoshop },
 	                    _react2.default.createElement(_reactColor.PhotoshopPicker, {
-	                      color: this.state,
+	                      color: this.state.hsl,
 	                      onChangeComplete: this.handleChangeComplete
 	                    }),
 	                    _react2.default.createElement(
@@ -26486,7 +26518,7 @@
 	                  'div',
 	                  { style: styles.block },
 	                  _react2.default.createElement(_reactColor.BlockPicker, {
-	                    color: this.state,
+	                    color: this.state.hsl,
 	                    onChangeComplete: this.handleChangeComplete
 	                  }),
 	                  _react2.default.createElement(
@@ -26505,7 +26537,7 @@
 	                      'div',
 	                      { style: styles.github },
 	                      _react2.default.createElement(_reactColor.GithubPicker, {
-	                        color: this.state,
+	                        color: this.state.hsl,
 	                        onChangeComplete: this.handleChangeComplete,
 	                        triangle: 'top-right'
 	                      }),
@@ -26519,7 +26551,7 @@
 	                      'div',
 	                      { style: styles.huealpha },
 	                      _react2.default.createElement(_reactColor.HuePicker, {
-	                        color: this.state,
+	                        color: this.state.hsl,
 	                        onChangeComplete: this.handleChangeComplete
 	                      }),
 	                      _react2.default.createElement(
@@ -26529,7 +26561,7 @@
 	                      ),
 	                      _react2.default.createElement('div', { style: styles.spacer }),
 	                      _react2.default.createElement(_reactColor.AlphaPicker, {
-	                        color: this.state,
+	                        color: this.state.hsl,
 	                        onChangeComplete: this.handleChangeComplete
 	                      }),
 	                      _react2.default.createElement(
@@ -26547,7 +26579,7 @@
 	                      'div',
 	                      { style: styles.twitter },
 	                      _react2.default.createElement(_reactColor.TwitterPicker, {
-	                        color: this.state,
+	                        color: this.state.hsl,
 	                        onChangeComplete: this.handleChangeComplete,
 	                        triangle: 'top-right'
 	                      }),
@@ -26561,7 +26593,7 @@
 	                      'div',
 	                      { style: styles.circle },
 	                      _react2.default.createElement(_reactColor.CirclePicker, {
-	                        color: this.state,
+	                        color: this.state.hsl,
 	                        onChangeComplete: this.handleChangeComplete
 	                      }),
 	                      _react2.default.createElement(
@@ -26593,7 +26625,7 @@
 	                  'div',
 	                  { style: styles.slider },
 	                  _react2.default.createElement(_reactColor.SliderPicker, {
-	                    color: this.state,
+	                    color: this.state.hsl,
 	                    onChangeComplete: this.handleChangeComplete
 	                  }),
 	                  _react2.default.createElement(
@@ -26609,7 +26641,7 @@
 	                    'div',
 	                    { style: styles.compact },
 	                    _react2.default.createElement(_reactColor.CompactPicker, {
-	                      color: this.state,
+	                      color: this.state.hsl,
 	                      onChangeComplete: this.handleChangeComplete
 	                    }),
 	                    _react2.default.createElement(
@@ -26622,7 +26654,7 @@
 	                    'div',
 	                    { style: styles.material },
 	                    _react2.default.createElement(_reactColor.MaterialPicker, {
-	                      color: this.state,
+	                      color: this.state.hsl,
 	                      onChangeComplete: this.handleChangeComplete
 	                    }),
 	                    _react2.default.createElement(
@@ -26637,7 +26669,7 @@
 	                'div',
 	                { style: styles.swatches },
 	                _react2.default.createElement(_reactColor.SwatchesPicker, {
-	                  color: this.state,
+	                  color: this.state.hsl,
 	                  onChangeComplete: this.handleChangeComplete
 	                }),
 	                _react2.default.createElement(
@@ -26667,7 +26699,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.CustomPicker = exports.TwitterPicker = exports.SwatchesPicker = exports.SliderPicker = exports.SketchPicker = exports.PhotoshopPicker = exports.MaterialPicker = exports.HuePicker = exports.GithubPicker = exports.CompactPicker = exports.ChromePicker = exports.default = exports.CirclePicker = exports.BlockPicker = exports.AlphaPicker = undefined;
+	exports.CustomPalette = exports.CustomPicker = exports.TwitterPicker = exports.SwatchesPicker = exports.SliderPicker = exports.SketchPicker = exports.PhotoshopPicker = exports.MaterialPicker = exports.HuePicker = exports.GithubPicker = exports.CompactPicker = exports.ChromePicker = exports.default = exports.CirclePicker = exports.BlockPicker = exports.AlphaPicker = undefined;
 
 	var _Alpha = __webpack_require__(340);
 
@@ -26678,7 +26710,7 @@
 	  }
 	});
 
-	var _Block = __webpack_require__(363);
+	var _Block = __webpack_require__(368);
 
 	Object.defineProperty(exports, 'BlockPicker', {
 	  enumerable: true,
@@ -26687,7 +26719,7 @@
 	  }
 	});
 
-	var _Circle = __webpack_require__(365);
+	var _Circle = __webpack_require__(370);
 
 	Object.defineProperty(exports, 'CirclePicker', {
 	  enumerable: true,
@@ -26696,7 +26728,7 @@
 	  }
 	});
 
-	var _Chrome = __webpack_require__(368);
+	var _Chrome = __webpack_require__(373);
 
 	Object.defineProperty(exports, 'ChromePicker', {
 	  enumerable: true,
@@ -26705,7 +26737,7 @@
 	  }
 	});
 
-	var _Compact = __webpack_require__(372);
+	var _Compact = __webpack_require__(377);
 
 	Object.defineProperty(exports, 'CompactPicker', {
 	  enumerable: true,
@@ -26714,7 +26746,7 @@
 	  }
 	});
 
-	var _Github = __webpack_require__(383);
+	var _Github = __webpack_require__(386);
 
 	Object.defineProperty(exports, 'GithubPicker', {
 	  enumerable: true,
@@ -26723,7 +26755,7 @@
 	  }
 	});
 
-	var _Hue = __webpack_require__(385);
+	var _Hue = __webpack_require__(388);
 
 	Object.defineProperty(exports, 'HuePicker', {
 	  enumerable: true,
@@ -26732,7 +26764,7 @@
 	  }
 	});
 
-	var _Material = __webpack_require__(387);
+	var _Material = __webpack_require__(390);
 
 	Object.defineProperty(exports, 'MaterialPicker', {
 	  enumerable: true,
@@ -26741,7 +26773,7 @@
 	  }
 	});
 
-	var _Photoshop = __webpack_require__(388);
+	var _Photoshop = __webpack_require__(391);
 
 	Object.defineProperty(exports, 'PhotoshopPicker', {
 	  enumerable: true,
@@ -26750,7 +26782,7 @@
 	  }
 	});
 
-	var _Sketch = __webpack_require__(394);
+	var _Sketch = __webpack_require__(397);
 
 	Object.defineProperty(exports, 'SketchPicker', {
 	  enumerable: true,
@@ -26759,7 +26791,7 @@
 	  }
 	});
 
-	var _Slider = __webpack_require__(397);
+	var _Slider = __webpack_require__(399);
 
 	Object.defineProperty(exports, 'SliderPicker', {
 	  enumerable: true,
@@ -26768,7 +26800,7 @@
 	  }
 	});
 
-	var _Swatches = __webpack_require__(401);
+	var _Swatches = __webpack_require__(403);
 
 	Object.defineProperty(exports, 'SwatchesPicker', {
 	  enumerable: true,
@@ -26777,7 +26809,7 @@
 	  }
 	});
 
-	var _Twitter = __webpack_require__(404);
+	var _Twitter = __webpack_require__(406);
 
 	Object.defineProperty(exports, 'TwitterPicker', {
 	  enumerable: true,
@@ -26786,12 +26818,21 @@
 	  }
 	});
 
-	var _ColorWrap = __webpack_require__(355);
+	var _ColorWrap = __webpack_require__(362);
 
 	Object.defineProperty(exports, 'CustomPicker', {
 	  enumerable: true,
 	  get: function get() {
 	    return _interopRequireDefault(_ColorWrap).default;
+	  }
+	});
+
+	var _SwatchWrap = __webpack_require__(358);
+
+	Object.defineProperty(exports, 'CustomPalette', {
+	  enumerable: true,
+	  get: function get() {
+	    return _interopRequireDefault(_SwatchWrap).default;
 	  }
 	});
 
@@ -26824,7 +26865,7 @@
 
 	var _common = __webpack_require__(341);
 
-	var _AlphaPointer = __webpack_require__(362);
+	var _AlphaPointer = __webpack_require__(367);
 
 	var _AlphaPointer2 = _interopRequireDefault(_AlphaPointer);
 
@@ -26933,7 +26974,16 @@
 	  }
 	});
 
-	var _ColorWrap = __webpack_require__(355);
+	var _Palette = __webpack_require__(355);
+
+	Object.defineProperty(exports, 'Palette', {
+	  enumerable: true,
+	  get: function get() {
+	    return _interopRequireDefault(_Palette).default;
+	  }
+	});
+
+	var _ColorWrap = __webpack_require__(362);
 
 	Object.defineProperty(exports, 'ColorWrap', {
 	  enumerable: true,
@@ -26948,6 +26998,15 @@
 	  enumerable: true,
 	  get: function get() {
 	    return _interopRequireDefault(_Swatch).default;
+	  }
+	});
+
+	var _SwatchWrap = __webpack_require__(358);
+
+	Object.defineProperty(exports, 'SwatchWrap', {
+	  enumerable: true,
+	  get: function get() {
+	    return _interopRequireDefault(_SwatchWrap).default;
 	  }
 	});
 
@@ -27009,7 +27068,7 @@
 	    }
 
 	    return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref2 = Alpha.__proto__ || Object.getPrototypeOf(Alpha)).call.apply(_ref2, [this].concat(args))), _this), _this.handleChange = function (e, skip) {
-	      var change = alpha.calculateChange(e, skip, _this.props, _this.refs.container);
+	      var change = alpha.calculateChange(e, skip, _this.props, _this.container);
 	      change && _this.props.onChange && _this.props.onChange(change, e);
 	    }, _this.handleMouseDown = function (e) {
 	      _this.handleChange(e, true);
@@ -27031,6 +27090,8 @@
 	  }, {
 	    key: 'render',
 	    value: function render() {
+	      var _this2 = this;
+
 	      var rgb = this.props.rgb;
 	      var styles = (0, _reactcss2.default)({
 	        'default': {
@@ -27095,7 +27156,9 @@
 	          'div',
 	          {
 	            style: styles.container,
-	            ref: 'container',
+	            ref: function ref(container) {
+	              return _this2.container = container;
+	            },
 	            onMouseDown: this.handleMouseDown,
 	            onTouchMove: this.handleChange,
 	            onTouchStart: this.handleChange
@@ -27126,7 +27189,7 @@
 	});
 	exports.calculateChange = calculateChange;
 	function calculateChange(e, skip, props, container) {
-	  !skip && e.preventDefault();
+	  e.preventDefault();
 	  var containerWidth = container.clientWidth;
 	  var containerHeight = container.clientHeight;
 	  var x = typeof e.pageX === 'number' ? e.pageX : e.touches[0].pageX;
@@ -27330,7 +27393,12 @@
 	    };
 
 	    _this.handleKeyDown = function (e) {
-	      var number = Number(e.target.value);
+	      // In case `e.target.value` is a percentage remove the `%` character
+	      // and update accordingly with a percentage
+	      // https://github.com/casesandberg/react-color/issues/383
+	      var stringValue = String(e.target.value);
+	      var isPercentage = stringValue.indexOf('%') > -1;
+	      var number = Number(stringValue.replace(/%/g, ''));
 	      if (!isNaN(number)) {
 	        var amount = _this.props.arrowOffset || 1;
 
@@ -27342,7 +27410,11 @@
 	            _this.props.onChange && _this.props.onChange(number + amount, e);
 	          }
 
-	          _this.setState({ value: number + amount });
+	          if (isPercentage) {
+	            _this.setState({ value: number + amount + '%' });
+	          } else {
+	            _this.setState({ value: number + amount });
+	          }
 	        }
 
 	        // Down
@@ -27353,7 +27425,11 @@
 	            _this.props.onChange && _this.props.onChange(number - amount, e);
 	          }
 
-	          _this.setState({ value: number - amount });
+	          if (isPercentage) {
+	            _this.setState({ value: number - amount + '%' });
+	          } else {
+	            _this.setState({ value: number - amount });
+	          }
 	        }
 	      }
 	    };
@@ -27395,7 +27471,7 @@
 	  _createClass(EditableInput, [{
 	    key: 'componentWillReceiveProps',
 	    value: function componentWillReceiveProps(nextProps) {
-	      var input = this.refs.input;
+	      var input = this.input;
 	      if (nextProps.value !== this.state.value) {
 	        if (input === document.activeElement) {
 	          this.setState({ blurValue: String(nextProps.value).toUpperCase() });
@@ -27412,6 +27488,8 @@
 	  }, {
 	    key: 'render',
 	    value: function render() {
+	      var _this2 = this;
+
 	      var styles = (0, _reactcss2.default)({
 	        'default': {
 	          wrap: {
@@ -27437,12 +27515,15 @@
 	        { style: styles.wrap },
 	        _react2.default.createElement('input', {
 	          style: styles.input,
-	          ref: 'input',
+	          ref: function ref(input) {
+	            return _this2.input = input;
+	          },
 	          value: this.state.value,
 	          onKeyDown: this.handleKeyDown,
 	          onChange: this.handleChange,
 	          onBlur: this.handleBlur,
-	          placeholder: this.props.placeholder
+	          placeholder: this.props.placeholder,
+	          spellCheck: 'false'
 	        }),
 	        this.props.label ? _react2.default.createElement(
 	          'span',
@@ -27508,7 +27589,7 @@
 	    }
 
 	    return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref2 = Hue.__proto__ || Object.getPrototypeOf(Hue)).call.apply(_ref2, [this].concat(args))), _this), _this.handleChange = function (e, skip) {
-	      var change = hue.calculateChange(e, skip, _this.props, _this.refs.container);
+	      var change = hue.calculateChange(e, skip, _this.props, _this.container);
 	      change && _this.props.onChange && _this.props.onChange(change, e);
 	    }, _this.handleMouseDown = function (e) {
 	      _this.handleChange(e, true);
@@ -27533,16 +27614,21 @@
 	  }, {
 	    key: 'render',
 	    value: function render() {
+	      var _this2 = this;
+
+	      var _props$direction = this.props.direction,
+	          direction = _props$direction === undefined ? 'horizontal' : _props$direction;
+
+
 	      var styles = (0, _reactcss2.default)({
 	        'default': {
 	          hue: {
 	            absolute: '0px 0px 0px 0px',
-	            background: 'linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%,\n            #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)',
 	            borderRadius: this.props.radius,
 	            boxShadow: this.props.shadow
 	          },
 	          container: {
-	            margin: '0 2px',
+	            padding: '0 2px',
 	            position: 'relative',
 	            height: '100%'
 	          },
@@ -27561,15 +27647,12 @@
 	          }
 	        },
 	        'vertical': {
-	          hue: {
-	            background: 'linear-gradient(to top, #f00 0%, #ff0 17%, #0f0 33%,\n            #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)'
-	          },
 	          pointer: {
 	            left: '0px',
 	            top: -(this.props.hsl.h * 100 / 360) + 100 + '%'
 	          }
 	        }
-	      }, { vertical: this.props.direction === 'vertical' });
+	      }, { vertical: direction === 'vertical' });
 
 	      return _react2.default.createElement(
 	        'div',
@@ -27577,12 +27660,20 @@
 	        _react2.default.createElement(
 	          'div',
 	          {
+	            className: 'hue-' + direction,
 	            style: styles.container,
-	            ref: 'container',
+	            ref: function ref(container) {
+	              return _this2.container = container;
+	            },
 	            onMouseDown: this.handleMouseDown,
 	            onTouchMove: this.handleChange,
 	            onTouchStart: this.handleChange
 	          },
+	          _react2.default.createElement(
+	            'style',
+	            null,
+	            '\n            .hue-horizontal {\n              background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0\n                33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);\n              background: -webkit-linear-gradient(to right, #f00 0%, #ff0\n                17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);\n            }\n\n            .hue-vertical {\n              background: linear-gradient(to top, #f00 0%, #ff0 17%, #0f0 33%,\n                #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);\n              background: -webkit-linear-gradient(to top, #f00 0%, #ff0 17%,\n                #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);\n            }\n          '
+	          ),
 	          _react2.default.createElement(
 	            'div',
 	            { style: styles.pointer },
@@ -27609,7 +27700,7 @@
 	});
 	exports.calculateChange = calculateChange;
 	function calculateChange(e, skip, props, container) {
-	  !skip && e.preventDefault();
+	  e.preventDefault();
 	  var containerWidth = container.clientWidth;
 	  var containerHeight = container.clientHeight;
 	  var x = typeof e.pageX === 'number' ? e.pageX : e.touches[0].pageX;
@@ -27709,7 +27800,7 @@
 	    var _this = _possibleConstructorReturn(this, (Saturation.__proto__ || Object.getPrototypeOf(Saturation)).call(this, props));
 
 	    _this.handleChange = function (e, skip) {
-	      _this.props.onChange && _this.throttle(_this.props.onChange, saturation.calculateChange(e, skip, _this.props, _this.refs.container), e);
+	      _this.props.onChange && _this.throttle(_this.props.onChange, saturation.calculateChange(e, skip, _this.props, _this.container), e);
 	    };
 
 	    _this.handleMouseDown = function (e) {
@@ -27742,6 +27833,8 @@
 	  }, {
 	    key: 'render',
 	    value: function render() {
+	      var _this2 = this;
+
 	      var _ref2 = this.props.style || {},
 	          color = _ref2.color,
 	          white = _ref2.white,
@@ -27758,12 +27851,12 @@
 	          },
 	          white: {
 	            absolute: '0px 0px 0px 0px',
-	            background: 'linear-gradient(to right, #fff, rgba(255,255,255,0))'
+	            borderRadius: this.props.radius
 	          },
 	          black: {
 	            absolute: '0px 0px 0px 0px',
-	            background: 'linear-gradient(to top, #000, rgba(0,0,0,0))',
-	            boxShadow: this.props.shadow
+	            boxShadow: this.props.shadow,
+	            borderRadius: this.props.radius
 	          },
 	          pointer: {
 	            position: 'absolute',
@@ -27793,15 +27886,22 @@
 	        'div',
 	        {
 	          style: styles.color,
-	          ref: 'container',
+	          ref: function ref(container) {
+	            return _this2.container = container;
+	          },
 	          onMouseDown: this.handleMouseDown,
 	          onTouchMove: this.handleChange,
 	          onTouchStart: this.handleChange
 	        },
 	        _react2.default.createElement(
+	          'style',
+	          null,
+	          '\n          .saturation-white {\n            background: -webkit-linear-gradient(to right, #fff, rgba(255,255,255,0));\n            background: linear-gradient(to right, #fff, rgba(255,255,255,0));\n          }\n          .saturation-black {\n            background: -webkit-linear-gradient(to top, #000, rgba(0,0,0,0));\n            background: linear-gradient(to top, #000, rgba(0,0,0,0));\n          }\n        '
+	        ),
+	        _react2.default.createElement(
 	          'div',
-	          { style: styles.white },
-	          _react2.default.createElement('div', { style: styles.black }),
+	          { style: styles.white, className: 'saturation-white' },
+	          _react2.default.createElement('div', { style: styles.black, className: 'saturation-black' }),
 	          _react2.default.createElement(
 	            'div',
 	            { style: styles.pointer },
@@ -28198,9 +28298,12 @@
 	});
 	exports.calculateChange = calculateChange;
 	function calculateChange(e, skip, props, container) {
-	  !skip && e.preventDefault();
-	  var containerWidth = container.clientWidth;
-	  var containerHeight = container.clientHeight;
+	  e.preventDefault();
+
+	  var _container$getBoundin = container.getBoundingClientRect(),
+	      containerWidth = _container$getBoundin.width,
+	      containerHeight = _container$getBoundin.height;
+
 	  var x = typeof e.pageX === 'number' ? e.pageX : e.touches[0].pageX;
 	  var y = typeof e.pageY === 'number' ? e.pageY : e.touches[0].pageY;
 	  var left = x - (container.getBoundingClientRect().left + window.pageXOffset);
@@ -28237,6 +28340,574 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	exports.Palette = undefined;
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _propTypes = __webpack_require__(356);
+
+	var _propTypes2 = _interopRequireDefault(_propTypes);
+
+	var _reactcss = __webpack_require__(172);
+
+	var _reactcss2 = _interopRequireDefault(_reactcss);
+
+	var _SwatchWrap = __webpack_require__(358);
+
+	var _SwatchWrap2 = _interopRequireDefault(_SwatchWrap);
+
+	var _Swatch = __webpack_require__(360);
+
+	var _Swatch2 = _interopRequireDefault(_Swatch);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var Palette = exports.Palette = function Palette(_ref) {
+	  var color = _ref.color,
+	      colors = _ref.colors,
+	      presetColors = _ref.presetColors,
+	      swatchesPerRow = _ref.swatchesPerRow,
+	      swatchSpacing = _ref.swatchSpacing,
+	      colorsStyle = _ref.colorsStyle,
+	      swatchStyle = _ref.swatchStyle,
+	      _ref$onClick = _ref.onClick,
+	      onClick = _ref$onClick === undefined ? function () {} : _ref$onClick,
+	      onPaletteChange = _ref.onPaletteChange,
+	      onSwatchHover = _ref.onSwatchHover,
+	      enableCustomPalette = _ref.enableCustomPalette;
+
+	  var styles = (0, _reactcss2.default)({
+	    'default': {
+	      colors: _extends({
+	        display: 'flex',
+	        flexWrap: 'wrap'
+	      }, colorsStyle),
+	      swatchContainer: {
+	        display: 'inline-flex',
+	        position: 'relative',
+	        width: 'calc((100% - ' + swatchSpacing * swatchesPerRow + 'px) / ' + swatchesPerRow + ')',
+	        margin: '0 ' + swatchSpacing + 'px ' + swatchSpacing + 'px 0'
+	      },
+	      after: {
+	        content: '',
+	        display: 'flex',
+	        marginTop: '100%'
+	      },
+	      swatch: _extends({
+	        position: 'absolute'
+	      }, swatchStyle)
+	    }
+	  }, {});
+
+	  var handleClick = function handleClick(hex, e) {
+	    onClick({
+	      hex: hex,
+	      source: 'hex'
+	    }, e);
+	  };
+
+	  var handleRemove = function handleRemove(index, e) {
+	    e.preventDefault();
+	    var newPalette = colors;
+	    newPalette.splice(index, 1);
+	    onPaletteChange && onPaletteChange(newPalette, e);
+	  };
+
+	  var handleAdd = function handleAdd(e) {
+	    var newColor = color;
+	    var newPalette = colors;
+	    newPalette.push(newColor);
+	    onPaletteChange && onPaletteChange(newPalette, e);
+	  };
+
+	  var PaletteItem = function PaletteItem(index, c, count) {
+	    var allowRemove = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+
+	    return _react2.default.createElement(
+	      'div',
+	      {
+	        key: 'item-' + index,
+	        style: styles.swatchContainer,
+	        onContextMenu: allowRemove ? function (e) {
+	          return handleRemove(index, e);
+	        } : function () {}
+	      },
+	      _react2.default.createElement(_Swatch2.default, _extends({}, c, {
+	        style: styles.swatch,
+	        onClick: handleClick,
+	        onHover: onSwatchHover,
+	        focusStyle: {
+	          boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.15), 0 0 4px ' + c.color
+	        }
+	      }, (0, _reactcss.loop)(index, count))),
+	      _react2.default.createElement('div', { style: styles.after })
+	    );
+	  };
+
+	  var PaletteElement = function PaletteElement(colors) {
+	    var isCustom = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+	    var showPalette = !isCustom && (!presetColors || !presetColors.length) ? { display: 'none' } : {};
+	    return _react2.default.createElement(
+	      'div',
+	      { style: showPalette },
+	      _react2.default.createElement(
+	        'div',
+	        { style: styles.colors },
+	        colors.map(function (colorObjOrString, index, items) {
+	          var c = typeof colorObjOrString === 'string' ? { color: colorObjOrString } : colorObjOrString;
+	          return PaletteItem(index, c, items.length, isCustom);
+	        }),
+	        isCustom && _react2.default.createElement(
+	          'div',
+	          {
+	            style: _extends({}, styles.swatchContainer, { cursor: 'pointer' }),
+	            onClick: handleAdd },
+	          _react2.default.createElement(
+	            'svg',
+	            { style: _extends({}, styles.swatch, { boxShadow: '0 0 0 0' }), viewBox: '0 0 24 24' },
+	            _react2.default.createElement('path', { d: 'm23,10h-8.5c-0.3,0-0.5-0.2-0.5-0.5v-8.5c0-0.6-0.4-1-1-1h-2c-0.6,0-1,0.4-1,1v8.5c0,0.3-0.2,0.5-0.5,0.5h-8.5c-0.6,0-1,0.4-1,1v2c0,0.6 0.4,1 1,1h8.5c0.3,0 0.5,0.2 0.5,0.5v8.5c0,0.6 0.4,1 1,1h2c0.6,0 1-0.4 1-1v-8.5c0-0.3 0.2-0.5 0.5-0.5h8.5c0.6,0 1-0.4 1-1v-2c0-0.6-0.4-1-1-1z',
+	              fill: '#ddd' })
+	          ),
+	          _react2.default.createElement('div', { style: styles.after })
+	        )
+	      )
+	    );
+	  };
+
+	  return _react2.default.createElement(
+	    'div',
+	    null,
+	    PaletteElement(presetColors),
+	    enableCustomPalette && PaletteElement(colors, enableCustomPalette)
+	  );
+	};
+	Palette.propTypes = {
+	  enableCustomPalette: _propTypes2.default.bool,
+	  swatchesPerRow: _propTypes2.default.number,
+	  swatchSpacing: _propTypes2.default.number,
+	  colorsStyle: _propTypes2.default.object,
+	  swatchStyle: _propTypes2.default.object
+	};
+	Palette.defaultProps = {
+	  enableCustomPalette: false,
+	  swatchesPerRow: 8,
+	  swatchSpacing: 0
+	};
+
+	exports.default = (0, _SwatchWrap2.default)(Palette);
+
+/***/ }),
+/* 356 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-present, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 */
+
+	if (false) {
+	  var REACT_ELEMENT_TYPE = (typeof Symbol === 'function' &&
+	    Symbol.for &&
+	    Symbol.for('react.element')) ||
+	    0xeac7;
+
+	  var isValidElement = function(object) {
+	    return typeof object === 'object' &&
+	      object !== null &&
+	      object.$$typeof === REACT_ELEMENT_TYPE;
+	  };
+
+	  // By explicitly using `prop-types` you are opting into new development behavior.
+	  // http://fb.me/prop-types-in-prod
+	  var throwOnDirectAccess = true;
+	  module.exports = require('./factoryWithTypeCheckers')(isValidElement, throwOnDirectAccess);
+	} else {
+	  // By explicitly using `prop-types` you are opting into new production behavior.
+	  // http://fb.me/prop-types-in-prod
+	  module.exports = __webpack_require__(357)();
+	}
+
+
+/***/ }),
+/* 357 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-present, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 */
+
+	'use strict';
+
+	var emptyFunction = __webpack_require__(9);
+	var invariant = __webpack_require__(12);
+	var ReactPropTypesSecret = __webpack_require__(26);
+
+	module.exports = function() {
+	  function shim(props, propName, componentName, location, propFullName, secret) {
+	    if (secret === ReactPropTypesSecret) {
+	      // It is still safe when called from React.
+	      return;
+	    }
+	    invariant(
+	      false,
+	      'Calling PropTypes validators directly is not supported by the `prop-types` package. ' +
+	      'Use PropTypes.checkPropTypes() to call them. ' +
+	      'Read more at http://fb.me/use-check-prop-types'
+	    );
+	  };
+	  shim.isRequired = shim;
+	  function getShim() {
+	    return shim;
+	  };
+	  // Important!
+	  // Keep this list in sync with production version in `./factoryWithTypeCheckers.js`.
+	  var ReactPropTypes = {
+	    array: shim,
+	    bool: shim,
+	    func: shim,
+	    number: shim,
+	    object: shim,
+	    string: shim,
+	    symbol: shim,
+
+	    any: shim,
+	    arrayOf: getShim,
+	    element: shim,
+	    instanceOf: getShim,
+	    node: shim,
+	    objectOf: getShim,
+	    oneOf: getShim,
+	    oneOfType: getShim,
+	    shape: getShim
+	  };
+
+	  ReactPropTypes.checkPropTypes = emptyFunction;
+	  ReactPropTypes.PropTypes = ReactPropTypes;
+
+	  return ReactPropTypes;
+	};
+
+
+/***/ }),
+/* 358 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.SwatchWrap = undefined;
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _propTypes = __webpack_require__(356);
+
+	var _propTypes2 = _interopRequireDefault(_propTypes);
+
+	var _palette = __webpack_require__(359);
+
+	var _palette2 = _interopRequireDefault(_palette);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var SwatchWrap = exports.SwatchWrap = function SwatchWrap(Palette) {
+	  var SwatchPalette = function (_ref) {
+	    _inherits(SwatchPalette, _ref);
+
+	    function SwatchPalette(props) {
+	      _classCallCheck(this, SwatchPalette);
+
+	      var _this = _possibleConstructorReturn(this, (SwatchPalette.__proto__ || Object.getPrototypeOf(SwatchPalette)).call(this));
+
+	      _this.handlePaletteChange = function (data, event) {
+	        var paletteChanged = !_palette2.default.compare(data, _this.props.colors);
+	        if (paletteChanged) {
+	          _this.setState({ colors: data });
+	          _this.props.onPaletteChange && _this.props.onPaletteChange(data, event);
+	        }
+	      };
+
+	      _this.state = {
+	        colors: props.colors
+	      };
+	      return _this;
+	    }
+
+	    _createClass(SwatchPalette, [{
+	      key: 'componentWillReceiveProps',
+	      value: function componentWillReceiveProps(nextProps) {
+	        if (this.props.enableCustomPalette) {
+	          this.setState({
+	            colors: nextProps.colors
+	          });
+	        }
+	      }
+	    }, {
+	      key: 'render',
+	      value: function render() {
+	        var optionalEvents = {};
+	        if (this.props.onPaletteChange) {
+	          optionalEvents.onPaletteChange = this.handlePaletteChange;
+	        }
+	        return _react2.default.createElement(Palette, _extends({}, this.props, this.state, optionalEvents));
+	      }
+	    }]);
+
+	    return SwatchPalette;
+	  }(_react.PureComponent || _react.Component);
+
+	  SwatchPalette.propTypes = _extends({}, Palette.propTypes, {
+	    colors: _propTypes2.default.arrayOf(_propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.shape({
+	      color: _propTypes2.default.string,
+	      title: _propTypes2.default.string
+	    })])),
+	    presetColors: _propTypes2.default.arrayOf(_propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.shape({
+	      color: _propTypes2.default.string,
+	      title: _propTypes2.default.string
+	    })]))
+	  });
+
+	  SwatchPalette.defaultProps = _extends({}, Palette.defaultProps, {
+	    colors: [],
+	    presetColors: []
+	  });
+
+	  return SwatchPalette;
+	};
+
+	exports.default = SwatchWrap;
+
+/***/ }),
+/* 359 */
+/***/ (function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.default = {
+	  compare: function compare(newPalette, oldPalette) {
+	    if (!newPalette) {
+	      return false;
+	    }
+	    if (oldPalette.length !== newPalette.length) {
+	      return false;
+	    }
+	    var checkValues = Array.prototype.forEach(function (_, i) {
+	      var pass = false;
+	      if (oldPalette[i] instanceof Object && newPalette[i] instanceof Object) {
+	        pass = Object.keys(oldPalette[i]).forEach(function (key) {
+	          if (Object.prototype.hasOwnProperty.call(oldPalette, key) !== Object.prototype.hasOwnProperty.call(newPalette, key)) {
+	            return false;
+	          } else if (oldPalette[key] !== newPalette[key]) {
+	            return false;
+	          }
+	          return true;
+	        }) &&
+	        // prop might exist in other object
+	        Object.keys(newPalette[i]).forEach(function (key) {
+	          if (Object.prototype.hasOwnProperty.call(newPalette, key) !== Object.prototype.hasOwnProperty.call(oldPalette, key)) {
+	            return false;
+	          } else if (oldPalette[key] !== newPalette[key]) {
+	            return false;
+	          }
+	          return true;
+	        });
+	      } else if (oldPalette[i] !== newPalette[i]) {
+	        return false;
+	      }
+	      return pass;
+	    });
+	    return !!checkValues;
+	  }
+	};
+
+/***/ }),
+/* 360 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.Swatch = undefined;
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _reactcss = __webpack_require__(172);
+
+	var _reactcss2 = _interopRequireDefault(_reactcss);
+
+	var _interaction = __webpack_require__(361);
+
+	var _ = __webpack_require__(341);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var ENTER = 13;
+
+	var Swatch = exports.Swatch = function Swatch(_ref) {
+	  var color = _ref.color,
+	      style = _ref.style,
+	      _ref$onClick = _ref.onClick,
+	      onClick = _ref$onClick === undefined ? function () {} : _ref$onClick,
+	      onHover = _ref.onHover,
+	      _ref$title = _ref.title,
+	      title = _ref$title === undefined ? color : _ref$title,
+	      children = _ref.children,
+	      focus = _ref.focus,
+	      _ref$focusStyle = _ref.focusStyle,
+	      focusStyle = _ref$focusStyle === undefined ? {} : _ref$focusStyle;
+
+	  var transparent = color === 'transparent';
+	  var styles = (0, _reactcss2.default)({
+	    default: {
+	      swatch: _extends({
+	        background: color,
+	        height: '100%',
+	        width: '100%',
+	        cursor: 'pointer',
+	        position: 'relative',
+	        outline: 'none'
+	      }, style, focus ? focusStyle : {})
+	    }
+	  });
+
+	  var handleClick = function handleClick(e) {
+	    return onClick(color, e);
+	  };
+	  var handleKeyDown = function handleKeyDown(e) {
+	    return e.keyCode === ENTER && onClick(color, e);
+	  };
+	  var handleHover = function handleHover(e) {
+	    return onHover(color, e);
+	  };
+
+	  var optionalEvents = {};
+	  if (onHover) {
+	    optionalEvents.onMouseOver = handleHover;
+	  }
+
+	  return _react2.default.createElement(
+	    'div',
+	    _extends({
+	      style: styles.swatch,
+	      onClick: handleClick,
+	      title: title,
+	      tabIndex: 0,
+	      onKeyDown: handleKeyDown
+	    }, optionalEvents),
+	    children,
+	    transparent && _react2.default.createElement(_.Checkboard, {
+	      borderRadius: styles.swatch.borderRadius,
+	      boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)'
+	    })
+	  );
+	};
+
+	exports.default = (0, _interaction.handleFocus)(Swatch);
+
+/***/ }),
+/* 361 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.handleFocus = undefined;
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var handleFocus = exports.handleFocus = function handleFocus(Component) {
+	  var Span = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'span';
+
+	  return function (_React$Component) {
+	    _inherits(Focus, _React$Component);
+
+	    function Focus() {
+	      var _ref;
+
+	      var _temp, _this, _ret;
+
+	      _classCallCheck(this, Focus);
+
+	      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+	        args[_key] = arguments[_key];
+	      }
+
+	      return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = Focus.__proto__ || Object.getPrototypeOf(Focus)).call.apply(_ref, [this].concat(args))), _this), _this.state = { focus: false }, _this.handleFocus = function () {
+	        return _this.setState({ focus: true });
+	      }, _this.handleBlur = function () {
+	        return _this.setState({ focus: false });
+	      }, _this.render = function () {
+	        return _react2.default.createElement(
+	          Span,
+	          { onFocus: _this.handleFocus, onBlur: _this.handleBlur },
+	          _react2.default.createElement(Component, _extends({}, _this.props, _this.state))
+	        );
+	      }, _temp), _possibleConstructorReturn(_this, _ret);
+	    }
+
+	    return Focus;
+	  }(_react2.default.Component);
+	};
+
+/***/ }),
+/* 362 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
 	exports.ColorWrap = undefined;
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -28251,7 +28922,7 @@
 
 	var _debounce2 = _interopRequireDefault(_debounce);
 
-	var _color = __webpack_require__(356);
+	var _color = __webpack_require__(363);
 
 	var _color2 = _interopRequireDefault(_color);
 
@@ -28282,6 +28953,15 @@
 	        }
 	      };
 
+	      _this.handleSwatchHover = function (data, event) {
+	        var isValidColor = _color2.default.simpleCheckForValidColor(data);
+	        if (isValidColor) {
+	          var colors = _color2.default.toState(data, data.h || _this.state.oldHue);
+	          _this.setState(colors);
+	          _this.props.onSwatchHover && _this.props.onSwatchHover(colors, event);
+	        }
+	      };
+
 	      _this.state = _extends({}, _color2.default.toState(props.color, 0));
 
 	      _this.debounce = (0, _debounce2.default)(function (fn, data, event) {
@@ -28298,21 +28978,29 @@
 	    }, {
 	      key: 'render',
 	      value: function render() {
-	        return _react2.default.createElement(Picker, _extends({}, this.props, this.state, { onChange: this.handleChange }));
+	        var optionalEvents = {};
+	        if (this.props.onSwatchHover) {
+	          optionalEvents.onSwatchHover = this.handleSwatchHover;
+	        }
+	        return _react2.default.createElement(Picker, _extends({}, this.props, this.state, {
+	          onChange: this.handleChange
+	        }, optionalEvents));
 	      }
 	    }]);
 
 	    return ColorPicker;
 	  }(_react.PureComponent || _react.Component);
 
-	  ColorPicker.defaultProps = {
+	  ColorPicker.propTypes = _extends({}, Picker.propTypes);
+
+	  ColorPicker.defaultProps = _extends({}, Picker.defaultProps, {
 	    color: {
 	      h: 250,
 	      s: 0.50,
 	      l: 0.20,
 	      a: 1
 	    }
-	  };
+	  });
 
 	  return ColorPicker;
 	};
@@ -28320,7 +29008,7 @@
 	exports.default = ColorWrap;
 
 /***/ }),
-/* 356 */
+/* 363 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -28330,11 +29018,11 @@
 	});
 	exports.red = undefined;
 
-	var _each = __webpack_require__(357);
+	var _each = __webpack_require__(364);
 
 	var _each2 = _interopRequireDefault(_each);
 
-	var _tinycolor = __webpack_require__(359);
+	var _tinycolor = __webpack_require__(366);
 
 	var _tinycolor2 = _interopRequireDefault(_tinycolor);
 
@@ -28342,7 +29030,7 @@
 
 	exports.default = {
 	  simpleCheckForValidColor: function simpleCheckForValidColor(data) {
-	    var keysToCheck = ['r', 'g', 'b', 'a', 'h', 's', 'a', 'v'];
+	    var keysToCheck = ['r', 'g', 'b', 'a', 'h', 's', 'l', 'v'];
 	    var checked = 0;
 	    var passed = 0;
 	    (0, _each2.default)(keysToCheck, function (letter) {
@@ -28388,14 +29076,14 @@
 	};
 
 /***/ }),
-/* 357 */
+/* 364 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(358);
+	module.exports = __webpack_require__(365);
 
 
 /***/ }),
-/* 358 */
+/* 365 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var arrayEach = __webpack_require__(304),
@@ -28442,7 +29130,7 @@
 
 
 /***/ }),
-/* 359 */
+/* 366 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;// jscs: disable
@@ -28764,16 +29452,16 @@
 							format = String(color.r).substr(-1) === "%" ? "prgb" : "rgb";
 					}
 					else if (color.hasOwnProperty("h") && color.hasOwnProperty("s") && color.hasOwnProperty("v")) {
-							color.s = convertToPercentage(color.s, 1);
-							color.v = convertToPercentage(color.v, 1);
-							rgb = hsvToRgb(color.h, color.s, color.v);
+							var s = convertToPercentage(color.s, 1);
+							var v = convertToPercentage(color.v, 1);
+							rgb = hsvToRgb(color.h, s, v);
 							ok = true;
 							format = "hsv";
 					}
 					else if (color.hasOwnProperty("h") && color.hasOwnProperty("s") && color.hasOwnProperty("l")) {
-							color.s = convertToPercentage(color.s);
-							color.l = convertToPercentage(color.l);
-							rgb = hslToRgb(color.h, color.s, color.l);
+							var s = convertToPercentage(color.s);
+							var l = convertToPercentage(color.l);
+							rgb = hslToRgb(color.h, s, l);
 							ok = true;
 							format = "hsl";
 					}
@@ -29409,8 +30097,8 @@
 	}
 
 	// Return a valid alpha value [0,1] with all invalid values being set to 1
-	function boundAlpha(a) {
-			a = parseFloat(a);
+	function boundAlpha(alpha) {
+			var a = parseFloat(alpha);
 
 			if (isNaN(a) || a < 0 || a > 1) {
 					a = 1;
@@ -29614,156 +30302,7 @@
 
 
 /***/ }),
-/* 360 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.Swatch = undefined;
-
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-	var _react = __webpack_require__(2);
-
-	var _react2 = _interopRequireDefault(_react);
-
-	var _reactcss = __webpack_require__(172);
-
-	var _reactcss2 = _interopRequireDefault(_reactcss);
-
-	var _interaction = __webpack_require__(361);
-
-	var _ = __webpack_require__(341);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	var ENTER = 13;
-
-	var Swatch = exports.Swatch = function Swatch(_ref) {
-	  var color = _ref.color,
-	      style = _ref.style,
-	      _ref$onClick = _ref.onClick,
-	      onClick = _ref$onClick === undefined ? function () {} : _ref$onClick,
-	      onHover = _ref.onHover,
-	      _ref$title = _ref.title,
-	      title = _ref$title === undefined ? color : _ref$title,
-	      children = _ref.children,
-	      focus = _ref.focus,
-	      _ref$focusStyle = _ref.focusStyle,
-	      focusStyle = _ref$focusStyle === undefined ? {} : _ref$focusStyle;
-
-	  var transparent = color === 'transparent';
-	  var styles = (0, _reactcss2.default)({
-	    default: {
-	      swatch: _extends({
-	        background: color,
-	        height: '100%',
-	        width: '100%',
-	        cursor: 'pointer',
-	        position: 'relative',
-	        outline: 'none'
-	      }, style, focus ? focusStyle : {})
-	    }
-	  });
-
-	  var handleClick = function handleClick(e) {
-	    return onClick(color, e);
-	  };
-	  var handleKeyDown = function handleKeyDown(e) {
-	    return e.keyCode === ENTER && onClick(color, e);
-	  };
-	  var handleHover = function handleHover(e) {
-	    return onHover(color, e);
-	  };
-
-	  var optionalEvents = {};
-	  if (onHover) {
-	    optionalEvents.onMouseOver = handleHover;
-	  }
-
-	  return _react2.default.createElement(
-	    'div',
-	    _extends({
-	      style: styles.swatch,
-	      onClick: handleClick,
-	      title: title,
-	      tabIndex: 0,
-	      onKeyDown: handleKeyDown
-	    }, optionalEvents),
-	    children,
-	    transparent && _react2.default.createElement(_.Checkboard, {
-	      borderRadius: styles.swatch.borderRadius,
-	      boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)'
-	    })
-	  );
-	};
-
-	exports.default = (0, _interaction.handleFocus)(Swatch);
-
-/***/ }),
-/* 361 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.handleFocus = undefined;
-
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-	var _react = __webpack_require__(2);
-
-	var _react2 = _interopRequireDefault(_react);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	var handleFocus = exports.handleFocus = function handleFocus(Component) {
-	  var Span = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'span';
-
-	  return function (_React$Component) {
-	    _inherits(Focus, _React$Component);
-
-	    function Focus() {
-	      var _ref;
-
-	      var _temp, _this, _ret;
-
-	      _classCallCheck(this, Focus);
-
-	      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-	        args[_key] = arguments[_key];
-	      }
-
-	      return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = Focus.__proto__ || Object.getPrototypeOf(Focus)).call.apply(_ref, [this].concat(args))), _this), _this.state = { focus: false }, _this.handleFocus = function () {
-	        return _this.setState({ focus: true });
-	      }, _this.handleBlur = function () {
-	        return _this.setState({ focus: false });
-	      }, _this.render = function () {
-	        return _react2.default.createElement(
-	          Span,
-	          { onFocus: _this.handleFocus, onBlur: _this.handleBlur },
-	          _react2.default.createElement(Component, _extends({}, _this.props, _this.state))
-	        );
-	      }, _temp), _possibleConstructorReturn(_this, _ret);
-	    }
-
-	    return Focus;
-	  }(_react2.default.Component);
-	};
-
-/***/ }),
-/* 362 */
+/* 367 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29810,7 +30349,7 @@
 	exports.default = AlphaPointer;
 
 /***/ }),
-/* 363 */
+/* 368 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -29824,17 +30363,21 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _propTypes = __webpack_require__(356);
+
+	var _propTypes2 = _interopRequireDefault(_propTypes);
+
 	var _reactcss = __webpack_require__(172);
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _color = __webpack_require__(356);
+	var _color = __webpack_require__(363);
 
 	var _color2 = _interopRequireDefault(_color);
 
 	var _common = __webpack_require__(341);
 
-	var _BlockSwatches = __webpack_require__(364);
+	var _BlockSwatches = __webpack_require__(369);
 
 	var _BlockSwatches2 = _interopRequireDefault(_BlockSwatches);
 
@@ -29940,8 +30483,14 @@
 	  );
 	};
 
+	Block.propTypes = {
+	  width: _propTypes2.default.number,
+	  colors: _propTypes2.default.arrayOf(_propTypes2.default.string),
+	  triangle: _propTypes2.default.oneOf(['top', 'hide'])
+	};
+
 	Block.defaultProps = {
-	  width: '170px',
+	  width: 170,
 	  colors: ['#D9E3F0', '#F47373', '#697689', '#37D67A', '#2CCCE4', '#555555', '#dce775', '#ff8a65', '#ba68c8'],
 	  triangle: 'top'
 	};
@@ -29949,7 +30498,7 @@
 	exports.default = (0, _common.ColorWrap)(Block);
 
 /***/ }),
-/* 364 */
+/* 369 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -30021,7 +30570,7 @@
 	exports.default = BlockSwatches;
 
 /***/ }),
-/* 365 */
+/* 370 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -30035,6 +30584,10 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _propTypes = __webpack_require__(356);
+
+	var _propTypes2 = _interopRequireDefault(_propTypes);
+
 	var _reactcss = __webpack_require__(172);
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
@@ -30043,13 +30596,13 @@
 
 	var _map2 = _interopRequireDefault(_map);
 
-	var _materialColors = __webpack_require__(366);
+	var _materialColors = __webpack_require__(371);
 
 	var material = _interopRequireWildcard(_materialColors);
 
 	var _common = __webpack_require__(341);
 
-	var _CircleSwatch = __webpack_require__(367);
+	var _CircleSwatch = __webpack_require__(372);
 
 	var _CircleSwatch2 = _interopRequireDefault(_CircleSwatch);
 
@@ -30099,8 +30652,14 @@
 	  );
 	};
 
+	Circle.propTypes = {
+	  width: _propTypes2.default.number,
+	  circleSize: _propTypes2.default.number,
+	  circleSpacing: _propTypes2.default.number
+	};
+
 	Circle.defaultProps = {
-	  width: '252px',
+	  width: 252,
 	  circleSize: 28,
 	  circleSpacing: 14,
 	  colors: [material.red['500'], material.pink['500'], material.purple['500'], material.deepPurple['500'], material.indigo['500'], material.blue['500'], material.lightBlue['500'], material.cyan['500'], material.teal['500'], material.green['500'], material.lightGreen['500'], material.lime['500'], material.yellow['500'], material.amber['500'], material.orange['500'], material.deepOrange['500'], material.brown['500'], material.blueGrey['500']]
@@ -30109,7 +30668,7 @@
 	exports.default = (0, _common.ColorWrap)(Circle);
 
 /***/ }),
-/* 366 */
+/* 371 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
@@ -30126,7 +30685,7 @@
 
 
 /***/ }),
-/* 367 */
+/* 372 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -30207,7 +30766,7 @@
 	exports.default = (0, _reactcss.handleHover)(CircleSwatch);
 
 /***/ }),
-/* 368 */
+/* 373 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -30221,21 +30780,25 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _propTypes = __webpack_require__(356);
+
+	var _propTypes2 = _interopRequireDefault(_propTypes);
+
 	var _reactcss = __webpack_require__(172);
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
 	var _common = __webpack_require__(341);
 
-	var _ChromeFields = __webpack_require__(369);
+	var _ChromeFields = __webpack_require__(374);
 
 	var _ChromeFields2 = _interopRequireDefault(_ChromeFields);
 
-	var _ChromePointer = __webpack_require__(370);
+	var _ChromePointer = __webpack_require__(375);
 
 	var _ChromePointer2 = _interopRequireDefault(_ChromePointer);
 
-	var _ChromePointerCircle = __webpack_require__(371);
+	var _ChromePointerCircle = __webpack_require__(376);
 
 	var _ChromePointerCircle2 = _interopRequireDefault(_ChromePointerCircle);
 
@@ -30399,10 +30962,18 @@
 	  );
 	};
 
+	Chrome.propTypes = {
+	  disableAlpha: _propTypes2.default.bool
+	};
+
+	Chrome.defaultProps = {
+	  disableAlpha: false
+	};
+
 	exports.default = (0, _common.ColorWrap)(Chrome);
 
 /***/ }),
-/* 369 */
+/* 374 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -30422,7 +30993,7 @@
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _color = __webpack_require__(356);
+	var _color = __webpack_require__(363);
 
 	var _color2 = _interopRequireDefault(_color);
 
@@ -30494,8 +31065,8 @@
 	      } else if (data.h || data.s || data.l) {
 	        _this.props.onChange({
 	          h: data.h || _this.props.hsl.h,
-	          s: data.s && data.s.replace('%', '') || _this.props.hsl.s,
-	          l: data.l && data.l.replace('%', '') || _this.props.hsl.l,
+	          s: data.s && data.s || _this.props.hsl.s,
+	          l: data.l && data.l || _this.props.hsl.l,
 	          source: 'hsl'
 	        }, e);
 	      }
@@ -30525,6 +31096,8 @@
 	  }, {
 	    key: 'render',
 	    value: function render() {
+	      var _this2 = this;
+
 	      var styles = (0, _reactcss2.default)({
 	        'default': {
 	          wrap: {
@@ -30716,7 +31289,9 @@
 	          { style: styles.toggle },
 	          _react2.default.createElement(
 	            'div',
-	            { style: styles.icon, onClick: this.toggleViews, ref: 'icon' },
+	            { style: styles.icon, onClick: this.toggleViews, ref: function ref(icon) {
+	                return _this2.icon = icon;
+	              } },
 	            _react2.default.createElement(
 	              'svg',
 	              {
@@ -30727,12 +31302,16 @@
 	                onMouseOut: this.hideHighlight
 	              },
 	              _react2.default.createElement('path', {
-	                ref: 'iconUp',
+	                ref: function ref(iconUp) {
+	                  return _this2.iconUp = iconUp;
+	                },
 	                fill: '#333',
 	                d: 'M12,5.83L15.17,9L16.58,7.59L12,3L7.41,7.59L8.83,9L12,5.83Z'
 	              }),
 	              _react2.default.createElement('path', {
-	                ref: 'iconDown',
+	                ref: function ref(iconDown) {
+	                  return _this2.iconDown = iconDown;
+	                },
 	                fill: '#333',
 	                d: 'M12,18.17L8.83,15L7.42,16.41L12,21L16.59,16.41L15.17,15Z'
 	              })
@@ -30749,7 +31328,7 @@
 	exports.default = ChromeFields;
 
 /***/ }),
-/* 370 */
+/* 375 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -30789,7 +31368,7 @@
 	exports.default = ChromePointer;
 
 /***/ }),
-/* 371 */
+/* 376 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -30828,7 +31407,7 @@
 	exports.default = ChromePointerCircle;
 
 /***/ }),
-/* 372 */
+/* 377 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -30842,6 +31421,10 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _propTypes = __webpack_require__(356);
+
+	var _propTypes2 = _interopRequireDefault(_propTypes);
+
 	var _reactcss = __webpack_require__(172);
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
@@ -30850,19 +31433,19 @@
 
 	var _map2 = _interopRequireDefault(_map);
 
-	var _color = __webpack_require__(356);
+	var _color = __webpack_require__(363);
 
 	var _color2 = _interopRequireDefault(_color);
 
-	var _reactMaterialDesign = __webpack_require__(373);
+	var _reactMaterialDesign = __webpack_require__(378);
 
 	var _common = __webpack_require__(341);
 
-	var _CompactColor = __webpack_require__(381);
+	var _CompactColor = __webpack_require__(384);
 
 	var _CompactColor2 = _interopRequireDefault(_CompactColor);
 
-	var _CompactFields = __webpack_require__(382);
+	var _CompactFields = __webpack_require__(385);
 
 	var _CompactFields2 = _interopRequireDefault(_CompactFields);
 
@@ -30929,6 +31512,10 @@
 	  );
 	};
 
+	Compact.propTypes = {
+	  colors: _propTypes2.default.arrayOf(_propTypes2.default.string)
+	};
+
 	Compact.defaultProps = {
 	  colors: ['#4D4D4D', '#999999', '#FFFFFF', '#F44E3B', '#FE9200', '#FCDC00', '#DBDF00', '#A4DD00', '#68CCCA', '#73D8FF', '#AEA1FF', '#FDA1FF', '#333333', '#808080', '#cccccc', '#D33115', '#E27300', '#FCC400', '#B0BC00', '#68BC00', '#16A5A5', '#009CE0', '#7B64FF', '#FA28FF', '#000000', '#666666', '#B3B3B3', '#9F0500', '#C45100', '#FB9E00', '#808900', '#194D33', '#0C797D', '#0062B1', '#653294', '#AB149E']
 	};
@@ -30936,7 +31523,7 @@
 	exports.default = (0, _common.ColorWrap)(Compact);
 
 /***/ }),
-/* 373 */
+/* 378 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -30947,15 +31534,15 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var _libComponentsRaised = __webpack_require__(374);
+	var _libComponentsRaised = __webpack_require__(379);
 
 	var _libComponentsRaised2 = _interopRequireDefault(_libComponentsRaised);
 
-	var _libComponentsTile = __webpack_require__(377);
+	var _libComponentsTile = __webpack_require__(380);
 
 	var _libComponentsTile2 = _interopRequireDefault(_libComponentsTile);
 
-	var _libComponentsTabs = __webpack_require__(378);
+	var _libComponentsTabs = __webpack_require__(381);
 
 	var _libComponentsTabs2 = _interopRequireDefault(_libComponentsTabs);
 
@@ -30965,7 +31552,7 @@
 
 
 /***/ }),
-/* 374 */
+/* 379 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* jshint node: true, esnext: true */
@@ -30981,7 +31568,7 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _propTypes = __webpack_require__(375);
+	var _propTypes = __webpack_require__(356);
 
 	var _propTypes2 = _interopRequireDefault(_propTypes);
 
@@ -31099,108 +31686,7 @@
 	exports.default = Raised;
 
 /***/ }),
-/* 375 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-present, Facebook, Inc.
-	 * All rights reserved.
-	 *
-	 * This source code is licensed under the BSD-style license found in the
-	 * LICENSE file in the root directory of this source tree. An additional grant
-	 * of patent rights can be found in the PATENTS file in the same directory.
-	 */
-
-	if (false) {
-	  var REACT_ELEMENT_TYPE = (typeof Symbol === 'function' &&
-	    Symbol.for &&
-	    Symbol.for('react.element')) ||
-	    0xeac7;
-
-	  var isValidElement = function(object) {
-	    return typeof object === 'object' &&
-	      object !== null &&
-	      object.$$typeof === REACT_ELEMENT_TYPE;
-	  };
-
-	  // By explicitly using `prop-types` you are opting into new development behavior.
-	  // http://fb.me/prop-types-in-prod
-	  var throwOnDirectAccess = true;
-	  module.exports = require('./factoryWithTypeCheckers')(isValidElement, throwOnDirectAccess);
-	} else {
-	  // By explicitly using `prop-types` you are opting into new production behavior.
-	  // http://fb.me/prop-types-in-prod
-	  module.exports = __webpack_require__(376)();
-	}
-
-
-/***/ }),
-/* 376 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	/**
-	 * Copyright 2013-present, Facebook, Inc.
-	 * All rights reserved.
-	 *
-	 * This source code is licensed under the BSD-style license found in the
-	 * LICENSE file in the root directory of this source tree. An additional grant
-	 * of patent rights can be found in the PATENTS file in the same directory.
-	 */
-
-	'use strict';
-
-	var emptyFunction = __webpack_require__(9);
-	var invariant = __webpack_require__(12);
-	var ReactPropTypesSecret = __webpack_require__(26);
-
-	module.exports = function() {
-	  function shim(props, propName, componentName, location, propFullName, secret) {
-	    if (secret === ReactPropTypesSecret) {
-	      // It is still safe when called from React.
-	      return;
-	    }
-	    invariant(
-	      false,
-	      'Calling PropTypes validators directly is not supported by the `prop-types` package. ' +
-	      'Use PropTypes.checkPropTypes() to call them. ' +
-	      'Read more at http://fb.me/use-check-prop-types'
-	    );
-	  };
-	  shim.isRequired = shim;
-	  function getShim() {
-	    return shim;
-	  };
-	  // Important!
-	  // Keep this list in sync with production version in `./factoryWithTypeCheckers.js`.
-	  var ReactPropTypes = {
-	    array: shim,
-	    bool: shim,
-	    func: shim,
-	    number: shim,
-	    object: shim,
-	    string: shim,
-	    symbol: shim,
-
-	    any: shim,
-	    arrayOf: getShim,
-	    element: shim,
-	    instanceOf: getShim,
-	    node: shim,
-	    objectOf: getShim,
-	    oneOf: getShim,
-	    oneOfType: getShim,
-	    shape: getShim
-	  };
-
-	  ReactPropTypes.checkPropTypes = emptyFunction;
-	  ReactPropTypes.PropTypes = ReactPropTypes;
-
-	  return ReactPropTypes;
-	};
-
-
-/***/ }),
-/* 377 */
+/* 380 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* jshint node: true, esnext: true */
@@ -31329,7 +31815,7 @@
 	exports.default = Tile;
 
 /***/ }),
-/* 378 */
+/* 381 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -31352,11 +31838,11 @@
 
 	var _isString2 = _interopRequireDefault(_isString);
 
-	var _Tab = __webpack_require__(379);
+	var _Tab = __webpack_require__(382);
 
 	var _Tab2 = _interopRequireDefault(_Tab);
 
-	var _Link = __webpack_require__(380);
+	var _Link = __webpack_require__(383);
 
 	var _Link2 = _interopRequireDefault(_Link);
 
@@ -31596,7 +32082,7 @@
 	exports.default = Tabs;
 
 /***/ }),
-/* 379 */
+/* 382 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -31611,7 +32097,7 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _propTypes = __webpack_require__(375);
+	var _propTypes = __webpack_require__(356);
 
 	var _propTypes2 = _interopRequireDefault(_propTypes);
 
@@ -31699,7 +32185,7 @@
 	exports.default = Tab;
 
 /***/ }),
-/* 380 */
+/* 383 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -31784,7 +32270,7 @@
 	exports.default = Link;
 
 /***/ }),
-/* 381 */
+/* 384 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -31868,7 +32354,7 @@
 	exports.default = CompactColor;
 
 /***/ }),
-/* 382 */
+/* 385 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -32006,7 +32492,7 @@
 	exports.default = CompactFields;
 
 /***/ }),
-/* 383 */
+/* 386 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -32020,6 +32506,10 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _propTypes = __webpack_require__(356);
+
+	var _propTypes2 = _interopRequireDefault(_propTypes);
+
 	var _reactcss = __webpack_require__(172);
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
@@ -32030,7 +32520,7 @@
 
 	var _common = __webpack_require__(341);
 
-	var _GithubSwatch = __webpack_require__(384);
+	var _GithubSwatch = __webpack_require__(387);
 
 	var _GithubSwatch2 = _interopRequireDefault(_GithubSwatch);
 
@@ -32124,13 +32614,24 @@
 	    _react2.default.createElement('div', { style: styles.triangleShadow }),
 	    _react2.default.createElement('div', { style: styles.triangle }),
 	    (0, _map2.default)(colors, function (c) {
-	      return _react2.default.createElement(_GithubSwatch2.default, { color: c, key: c, onClick: handleChange, onSwatchHover: onSwatchHover });
+	      return _react2.default.createElement(_GithubSwatch2.default, {
+	        color: c,
+	        key: c,
+	        onClick: handleChange,
+	        onSwatchHover: onSwatchHover
+	      });
 	    })
 	  );
 	};
 
+	Github.propTypes = {
+	  width: _propTypes2.default.number,
+	  colors: _propTypes2.default.arrayOf(_propTypes2.default.string),
+	  triangle: _propTypes2.default.oneOf(['hide', 'top-left', 'top-right'])
+	};
+
 	Github.defaultProps = {
-	  width: '200px',
+	  width: 200,
 	  colors: ['#B80000', '#DB3E00', '#FCCB00', '#008B02', '#006B76', '#1273DE', '#004DCF', '#5300EB', '#EB9694', '#FAD0C3', '#FEF3BD', '#C1E1C5', '#BEDADC', '#C4DEF6', '#BED3F3', '#D4C4FB'],
 	  triangle: 'top-left'
 	};
@@ -32138,7 +32639,7 @@
 	exports.default = (0, _common.ColorWrap)(Github);
 
 /***/ }),
-/* 384 */
+/* 387 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -32177,7 +32678,8 @@
 	    'default': {
 	      swatch: {
 	        width: '25px',
-	        height: '25px'
+	        height: '25px',
+	        fontSize: '0'
 	      }
 	    },
 	    'hover': {
@@ -32195,7 +32697,7 @@
 	exports.default = (0, _reactcss.handleHover)(GithubSwatch);
 
 /***/ }),
-/* 385 */
+/* 388 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -32217,7 +32719,7 @@
 
 	var _common = __webpack_require__(341);
 
-	var _HuePointer = __webpack_require__(386);
+	var _HuePointer = __webpack_require__(389);
 
 	var _HuePointer2 = _interopRequireDefault(_HuePointer);
 
@@ -32271,7 +32773,7 @@
 	exports.default = (0, _common.ColorWrap)(HuePicker);
 
 /***/ }),
-/* 386 */
+/* 389 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -32318,7 +32820,7 @@
 	exports.default = SliderPointer;
 
 /***/ }),
-/* 387 */
+/* 390 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -32336,11 +32838,11 @@
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _color = __webpack_require__(356);
+	var _color = __webpack_require__(363);
 
 	var _color2 = _interopRequireDefault(_color);
 
-	var _reactMaterialDesign = __webpack_require__(373);
+	var _reactMaterialDesign = __webpack_require__(378);
 
 	var _common = __webpack_require__(341);
 
@@ -32486,7 +32988,7 @@
 	exports.default = (0, _common.ColorWrap)(Material);
 
 /***/ }),
-/* 388 */
+/* 391 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -32502,29 +33004,33 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _propTypes = __webpack_require__(356);
+
+	var _propTypes2 = _interopRequireDefault(_propTypes);
+
 	var _reactcss = __webpack_require__(172);
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
 	var _common = __webpack_require__(341);
 
-	var _PhotoshopFields = __webpack_require__(389);
+	var _PhotoshopFields = __webpack_require__(392);
 
 	var _PhotoshopFields2 = _interopRequireDefault(_PhotoshopFields);
 
-	var _PhotoshopPointerCircle = __webpack_require__(390);
+	var _PhotoshopPointerCircle = __webpack_require__(393);
 
 	var _PhotoshopPointerCircle2 = _interopRequireDefault(_PhotoshopPointerCircle);
 
-	var _PhotoshopPointer = __webpack_require__(391);
+	var _PhotoshopPointer = __webpack_require__(394);
 
 	var _PhotoshopPointer2 = _interopRequireDefault(_PhotoshopPointer);
 
-	var _PhotoshopButton = __webpack_require__(392);
+	var _PhotoshopButton = __webpack_require__(395);
 
 	var _PhotoshopButton2 = _interopRequireDefault(_PhotoshopButton);
 
-	var _PhotoshopPreviews = __webpack_require__(393);
+	var _PhotoshopPreviews = __webpack_require__(396);
 
 	var _PhotoshopPreviews2 = _interopRequireDefault(_PhotoshopPreviews);
 
@@ -32677,6 +33183,10 @@
 	  return Photoshop;
 	}(_react2.default.Component);
 
+	Photoshop.propTypes = {
+	  header: _propTypes2.default.string
+	};
+
 	Photoshop.defaultProps = {
 	  header: 'Color Picker'
 	};
@@ -32684,7 +33194,7 @@
 	exports.default = (0, _common.ColorWrap)(Photoshop);
 
 /***/ }),
-/* 389 */
+/* 392 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -32702,7 +33212,7 @@
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _color = __webpack_require__(356);
+	var _color = __webpack_require__(363);
 
 	var _color2 = _interopRequireDefault(_color);
 
@@ -32882,7 +33392,7 @@
 	exports.default = PhotoshopPicker;
 
 /***/ }),
-/* 390 */
+/* 393 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -32928,7 +33438,7 @@
 	exports.default = PhotoshopPointerCircle;
 
 /***/ }),
-/* 391 */
+/* 394 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33008,7 +33518,7 @@
 	exports.default = PhotoshopPointerCircle;
 
 /***/ }),
-/* 392 */
+/* 395 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33067,7 +33577,7 @@
 	exports.default = PhotoshopBotton;
 
 /***/ }),
-/* 393 */
+/* 396 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33142,7 +33652,7 @@
 	exports.default = PhotoshopPreviews;
 
 /***/ }),
-/* 394 */
+/* 397 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33156,19 +33666,19 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _propTypes = __webpack_require__(356);
+
+	var _propTypes2 = _interopRequireDefault(_propTypes);
+
 	var _reactcss = __webpack_require__(172);
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
 	var _common = __webpack_require__(341);
 
-	var _SketchFields = __webpack_require__(395);
+	var _SketchFields = __webpack_require__(398);
 
 	var _SketchFields2 = _interopRequireDefault(_SketchFields);
-
-	var _SketchPresetColors = __webpack_require__(396);
-
-	var _SketchPresetColors2 = _interopRequireDefault(_SketchPresetColors);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -33178,17 +33688,22 @@
 	      hex = _ref.hex,
 	      hsv = _ref.hsv,
 	      hsl = _ref.hsl,
+	      customColors = _ref.customColors,
+	      presetColors = _ref.presetColors,
 	      onChange = _ref.onChange,
+	      onPaletteChange = _ref.onPaletteChange,
 	      onSwatchHover = _ref.onSwatchHover,
 	      disableAlpha = _ref.disableAlpha,
-	      presetColors = _ref.presetColors,
+	      disablePalette = _ref.disablePalette,
+	      enableCustomPalette = _ref.enableCustomPalette,
 	      renderers = _ref.renderers;
 
+	  var padding = 10;
 	  var styles = (0, _reactcss2.default)({
 	    'default': {
 	      picker: {
 	        width: width,
-	        padding: '10px 10px 0',
+	        padding: padding + 'px ' + padding + 'px 0',
 	        boxSizing: 'initial',
 	        background: '#fff',
 	        borderRadius: '4px',
@@ -33234,7 +33749,6 @@
 	        radius: '2px',
 	        shadow: 'inset 0 0 0 1px rgba(0,0,0,.15), inset 0 0 4px rgba(0,0,0,.25)'
 	      },
-
 	      alpha: {
 	        position: 'relative',
 	        height: '10px',
@@ -33244,6 +33758,15 @@
 	      Alpha: {
 	        radius: '2px',
 	        shadow: 'inset 0 0 0 1px rgba(0,0,0,.15), inset 0 0 4px rgba(0,0,0,.25)'
+	      },
+	      colors: {
+	        borderTop: '1px solid #eee',
+	        margin: '0 -' + padding + 'px',
+	        padding: padding + 'px ' + padding + 'px 0'
+	      },
+	      swatch: {
+	        borderRadius: '3px',
+	        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.15)'
 	      }
 	    },
 	    'disableAlpha': {
@@ -33313,19 +33836,38 @@
 	      onChange: onChange,
 	      disableAlpha: disableAlpha
 	    }),
-	    _react2.default.createElement(_SketchPresetColors2.default, { colors: presetColors, onClick: onChange, onSwatchHover: onSwatchHover })
+	    !disablePalette && _react2.default.createElement(_common.Palette, {
+	      color: hex,
+	      colors: customColors,
+	      presetColors: presetColors,
+	      swatchesPerRow: 8,
+	      swatchSpacing: 8,
+	      colorsStyle: styles.colors,
+	      swatchStyle: styles.swatch,
+	      onClick: onChange,
+	      onSwatchHover: onSwatchHover,
+	      onPaletteChange: onPaletteChange,
+	      enableCustomPalette: enableCustomPalette
+	    })
 	  );
 	};
 
+	Sketch.propTypes = {
+	  disableAlpha: _propTypes2.default.bool,
+	  disablePalette: _propTypes2.default.bool,
+	  width: _propTypes2.default.number
+	};
+
 	Sketch.defaultProps = {
-	  presetColors: ['#D0021B', '#F5A623', '#F8E71C', '#8B572A', '#7ED321', '#417505', '#BD10E0', '#9013FE', '#4A90E2', '#50E3C2', '#B8E986', '#000000', '#4A4A4A', '#9B9B9B', '#FFFFFF'],
+	  disableAlpha: false,
+	  disablePalette: false,
 	  width: 200
 	};
 
 	exports.default = (0, _common.ColorWrap)(Sketch);
 
 /***/ }),
-/* 395 */
+/* 398 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33343,7 +33885,7 @@
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _color = __webpack_require__(356);
+	var _color = __webpack_require__(363);
 
 	var _color2 = _interopRequireDefault(_color);
 
@@ -33500,107 +34042,7 @@
 	exports.default = ShetchFields;
 
 /***/ }),
-/* 396 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.SketchPresetColors = undefined;
-
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-	var _react = __webpack_require__(2);
-
-	var _react2 = _interopRequireDefault(_react);
-
-	var _propTypes = __webpack_require__(375);
-
-	var _propTypes2 = _interopRequireDefault(_propTypes);
-
-	var _reactcss = __webpack_require__(172);
-
-	var _reactcss2 = _interopRequireDefault(_reactcss);
-
-	var _common = __webpack_require__(341);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	var SketchPresetColors = exports.SketchPresetColors = function SketchPresetColors(_ref) {
-	  var colors = _ref.colors,
-	      _ref$onClick = _ref.onClick,
-	      onClick = _ref$onClick === undefined ? function () {} : _ref$onClick,
-	      onSwatchHover = _ref.onSwatchHover;
-
-	  var styles = (0, _reactcss2.default)({
-	    'default': {
-	      colors: {
-	        margin: '0 -10px',
-	        padding: '10px 0 0 10px',
-	        borderTop: '1px solid #eee',
-	        display: 'flex',
-	        flexWrap: 'wrap',
-	        position: 'relative'
-	      },
-	      swatchWrap: {
-	        width: '16px',
-	        height: '16px',
-	        margin: '0 10px 10px 0'
-	      },
-	      swatch: {
-	        borderRadius: '3px',
-	        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.15)'
-	      }
-	    },
-	    'no-presets': {
-	      colors: {
-	        display: 'none'
-	      }
-	    }
-	  }, {
-	    'no-presets': !colors || !colors.length
-	  });
-
-	  var handleClick = function handleClick(hex, e) {
-	    onClick({
-	      hex: hex,
-	      source: 'hex'
-	    }, e);
-	  };
-
-	  return _react2.default.createElement(
-	    'div',
-	    { style: styles.colors, className: 'flexbox-fix' },
-	    colors.map(function (colorObjOrString) {
-	      var c = typeof colorObjOrString === 'string' ? { color: colorObjOrString } : colorObjOrString;
-	      return _react2.default.createElement(
-	        'div',
-	        { key: c.color, style: styles.swatchWrap },
-	        _react2.default.createElement(_common.Swatch, _extends({}, c, {
-	          style: styles.swatch,
-	          onClick: handleClick,
-	          onHover: onSwatchHover,
-	          focusStyle: {
-	            boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.15), 0 0 4px ' + c.color
-	          }
-	        }))
-	      );
-	    })
-	  );
-	};
-	SketchPresetColors.propTypes = {
-	  colors: _propTypes2.default.arrayOf(_propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.shape({
-	    color: _propTypes2.default.string,
-	    title: _propTypes2.default.string
-	  })]))
-	};
-
-	exports.default = SketchPresetColors;
-
-/***/ }),
-/* 397 */
+/* 399 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33620,11 +34062,11 @@
 
 	var _common = __webpack_require__(341);
 
-	var _SliderSwatches = __webpack_require__(398);
+	var _SliderSwatches = __webpack_require__(400);
 
 	var _SliderSwatches2 = _interopRequireDefault(_SliderSwatches);
 
-	var _SliderPointer = __webpack_require__(400);
+	var _SliderPointer = __webpack_require__(402);
 
 	var _SliderPointer2 = _interopRequireDefault(_SliderPointer);
 
@@ -33675,7 +34117,7 @@
 	exports.default = (0, _common.ColorWrap)(Slider);
 
 /***/ }),
-/* 398 */
+/* 400 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33693,7 +34135,7 @@
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _SliderSwatch = __webpack_require__(399);
+	var _SliderSwatch = __webpack_require__(401);
 
 	var _SliderSwatch2 = _interopRequireDefault(_SliderSwatch);
 
@@ -33782,7 +34224,7 @@
 	exports.default = SliderSwatches;
 
 /***/ }),
-/* 399 */
+/* 401 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33852,7 +34294,7 @@
 	exports.default = SliderSwatch;
 
 /***/ }),
-/* 400 */
+/* 402 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33892,7 +34334,7 @@
 	exports.default = SliderPointer;
 
 /***/ }),
-/* 401 */
+/* 403 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33906,6 +34348,10 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _propTypes = __webpack_require__(356);
+
+	var _propTypes2 = _interopRequireDefault(_propTypes);
+
 	var _reactcss = __webpack_require__(172);
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
@@ -33914,19 +34360,19 @@
 
 	var _map2 = _interopRequireDefault(_map);
 
-	var _color = __webpack_require__(356);
+	var _color = __webpack_require__(363);
 
 	var _color2 = _interopRequireDefault(_color);
 
-	var _materialColors = __webpack_require__(366);
+	var _materialColors = __webpack_require__(371);
 
 	var material = _interopRequireWildcard(_materialColors);
 
 	var _common = __webpack_require__(341);
 
-	var _reactMaterialDesign = __webpack_require__(373);
+	var _reactMaterialDesign = __webpack_require__(378);
 
-	var _SwatchesGroup = __webpack_require__(402);
+	var _SwatchesGroup = __webpack_require__(404);
 
 	var _SwatchesGroup2 = _interopRequireDefault(_SwatchesGroup);
 
@@ -33996,8 +34442,13 @@
 	  );
 	};
 
-	/* eslint-disable max-len */
-	Swatches.defaultProps = {
+	Swatches.propTypes = {
+	  width: _propTypes2.default.number,
+	  height: _propTypes2.default.number,
+	  colors: _propTypes2.default.arrayOf(_propTypes2.default.arrayOf(_propTypes2.default.string))
+
+	  /* eslint-disable max-len */
+	};Swatches.defaultProps = {
 	  width: 320,
 	  height: 240,
 	  colors: [[material.red['900'], material.red['700'], material.red['500'], material.red['300'], material.red['100']], [material.pink['900'], material.pink['700'], material.pink['500'], material.pink['300'], material.pink['100']], [material.purple['900'], material.purple['700'], material.purple['500'], material.purple['300'], material.purple['100']], [material.deepPurple['900'], material.deepPurple['700'], material.deepPurple['500'], material.deepPurple['300'], material.deepPurple['100']], [material.indigo['900'], material.indigo['700'], material.indigo['500'], material.indigo['300'], material.indigo['100']], [material.blue['900'], material.blue['700'], material.blue['500'], material.blue['300'], material.blue['100']], [material.lightBlue['900'], material.lightBlue['700'], material.lightBlue['500'], material.lightBlue['300'], material.lightBlue['100']], [material.cyan['900'], material.cyan['700'], material.cyan['500'], material.cyan['300'], material.cyan['100']], [material.teal['900'], material.teal['700'], material.teal['500'], material.teal['300'], material.teal['100']], ['#194D33', material.green['700'], material.green['500'], material.green['300'], material.green['100']], [material.lightGreen['900'], material.lightGreen['700'], material.lightGreen['500'], material.lightGreen['300'], material.lightGreen['100']], [material.lime['900'], material.lime['700'], material.lime['500'], material.lime['300'], material.lime['100']], [material.yellow['900'], material.yellow['700'], material.yellow['500'], material.yellow['300'], material.yellow['100']], [material.amber['900'], material.amber['700'], material.amber['500'], material.amber['300'], material.amber['100']], [material.orange['900'], material.orange['700'], material.orange['500'], material.orange['300'], material.orange['100']], [material.deepOrange['900'], material.deepOrange['700'], material.deepOrange['500'], material.deepOrange['300'], material.deepOrange['100']], [material.brown['900'], material.brown['700'], material.brown['500'], material.brown['300'], material.brown['100']], [material.blueGrey['900'], material.blueGrey['700'], material.blueGrey['500'], material.blueGrey['300'], material.blueGrey['100']], ['#000000', '#525252', '#969696', '#D9D9D9', '#FFFFFF']]
@@ -34006,7 +34457,7 @@
 	exports.default = (0, _common.ColorWrap)(Swatches);
 
 /***/ }),
-/* 402 */
+/* 404 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34028,7 +34479,7 @@
 
 	var _map2 = _interopRequireDefault(_map);
 
-	var _SwatchesColor = __webpack_require__(403);
+	var _SwatchesColor = __webpack_require__(405);
 
 	var _SwatchesColor2 = _interopRequireDefault(_SwatchesColor);
 
@@ -34071,7 +34522,7 @@
 	exports.default = SwatchesGroup;
 
 /***/ }),
-/* 403 */
+/* 405 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34179,7 +34630,7 @@
 	exports.default = SwatchesColor;
 
 /***/ }),
-/* 404 */
+/* 406 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34193,6 +34644,10 @@
 
 	var _react2 = _interopRequireDefault(_react);
 
+	var _propTypes = __webpack_require__(356);
+
+	var _propTypes2 = _interopRequireDefault(_propTypes);
+
 	var _reactcss = __webpack_require__(172);
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
@@ -34201,7 +34656,7 @@
 
 	var _map2 = _interopRequireDefault(_map);
 
-	var _color = __webpack_require__(356);
+	var _color = __webpack_require__(363);
 
 	var _color2 = _interopRequireDefault(_color);
 
@@ -34269,6 +34724,7 @@
 	        outline: 'none',
 	        height: '28px',
 	        boxShadow: 'inset 0 0 0 1px #F0F0F0',
+	        boxSizing: 'content-box',
 	        borderRadius: '0 4px 4px 0',
 	        float: 'left',
 	        paddingLeft: '8px'
@@ -34361,8 +34817,14 @@
 	  );
 	};
 
+	Twitter.propTypes = {
+	  width: _propTypes2.default.number,
+	  triangle: _propTypes2.default.oneOf(['hide', 'top-left', 'top-right']),
+	  colors: _propTypes2.default.arrayOf(_propTypes2.default.string)
+	};
+
 	Twitter.defaultProps = {
-	  width: '276px',
+	  width: 276,
 	  colors: ['#FF6900', '#FCB900', '#7BDCB5', '#00D084', '#8ED1FC', '#0693E3', '#ABB8C3', '#EB144C', '#F78DA7', '#9900EF'],
 	  triangle: 'top-left'
 	};
@@ -34370,7 +34832,7 @@
 	exports.default = (0, _common.ColorWrap)(Twitter);
 
 /***/ }),
-/* 405 */
+/* 407 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34381,11 +34843,11 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var _libComponentsContainer = __webpack_require__(406);
+	var _libComponentsContainer = __webpack_require__(408);
 
 	var _libComponentsContainer2 = _interopRequireDefault(_libComponentsContainer);
 
-	var _libComponentsGrid = __webpack_require__(407);
+	var _libComponentsGrid = __webpack_require__(409);
 
 	var _libComponentsGrid2 = _interopRequireDefault(_libComponentsGrid);
 
@@ -34394,7 +34856,7 @@
 
 
 /***/ }),
-/* 406 */
+/* 408 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34462,7 +34924,7 @@
 	exports.default = Container;
 
 /***/ }),
-/* 407 */
+/* 409 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34643,7 +35105,7 @@
 	exports.default = Grid;
 
 /***/ }),
-/* 408 */
+/* 410 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34654,7 +35116,7 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var _libComponentsMove = __webpack_require__(409);
+	var _libComponentsMove = __webpack_require__(411);
 
 	var _libComponentsMove2 = _interopRequireDefault(_libComponentsMove);
 
@@ -34663,7 +35125,7 @@
 
 
 /***/ }),
-/* 409 */
+/* 411 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34749,7 +35211,7 @@
 	exports.default = Move;
 
 /***/ }),
-/* 410 */
+/* 412 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict'; /* eslint import/no-unresolved: 0 */
@@ -34768,21 +35230,21 @@
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _reactBasicLayout = __webpack_require__(405);
+	var _reactBasicLayout = __webpack_require__(407);
 
-	var _reactDocs = __webpack_require__(411);
+	var _reactDocs = __webpack_require__(413);
 
 	var _reactDocs2 = _interopRequireDefault(_reactDocs);
 
-	var _Markdown = __webpack_require__(419);
+	var _Markdown = __webpack_require__(421);
 
 	var _Markdown2 = _interopRequireDefault(_Markdown);
 
-	var _documentation = __webpack_require__(424);
+	var _documentation = __webpack_require__(426);
 
 	var _documentation2 = _interopRequireDefault(_documentation);
 
-	var _examples = __webpack_require__(438);
+	var _examples = __webpack_require__(440);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -34912,7 +35374,7 @@
 	exports.default = HomeDocumentation;
 
 /***/ }),
-/* 411 */
+/* 413 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34923,7 +35385,7 @@
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var _libComponentsDocs = __webpack_require__(412);
+	var _libComponentsDocs = __webpack_require__(414);
 
 	var _libComponentsDocs2 = _interopRequireDefault(_libComponentsDocs);
 
@@ -34932,7 +35394,7 @@
 
 
 /***/ }),
-/* 412 */
+/* 414 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34951,25 +35413,25 @@
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _markdown = __webpack_require__(413);
+	var _markdown = __webpack_require__(415);
 
 	var _markdown2 = _interopRequireDefault(_markdown);
 
-	var _reactBasicLayout = __webpack_require__(405);
+	var _reactBasicLayout = __webpack_require__(407);
 
-	var _MarkdownTitle = __webpack_require__(418);
+	var _MarkdownTitle = __webpack_require__(420);
 
 	var _MarkdownTitle2 = _interopRequireDefault(_MarkdownTitle);
 
-	var _Markdown = __webpack_require__(419);
+	var _Markdown = __webpack_require__(421);
 
 	var _Markdown2 = _interopRequireDefault(_Markdown);
 
-	var _Code = __webpack_require__(420);
+	var _Code = __webpack_require__(422);
 
 	var _Code2 = _interopRequireDefault(_Code);
 
-	var _Sidebar = __webpack_require__(422);
+	var _Sidebar = __webpack_require__(424);
 
 	var _Sidebar2 = _interopRequireDefault(_Sidebar);
 
@@ -35129,7 +35591,7 @@
 	exports.default = Docs;
 
 /***/ }),
-/* 413 */
+/* 415 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -35138,11 +35600,11 @@
 	  value: true
 	});
 
-	var _remarkable = __webpack_require__(414);
+	var _remarkable = __webpack_require__(416);
 
 	var _remarkable2 = _interopRequireDefault(_remarkable);
 
-	var _highlight = __webpack_require__(415);
+	var _highlight = __webpack_require__(417);
 
 	var _highlight2 = _interopRequireDefault(_highlight);
 
@@ -35231,7 +35693,7 @@
 	};
 
 /***/ }),
-/* 414 */
+/* 416 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var require;var require;/*! remarkable 1.5.0 https://github.com//jonschlinkert/remarkable @license MIT */ ! function(e) {
@@ -39834,18 +40296,18 @@
 	});
 
 /***/ }),
-/* 415 */
+/* 417 */
 /***/ (function(module, exports, __webpack_require__) {
 
-	var hljs = __webpack_require__(416);
+	var hljs = __webpack_require__(418);
 
-	hljs.registerLanguage('javascript', __webpack_require__(417));
+	hljs.registerLanguage('javascript', __webpack_require__(419));
 
 	module.exports = hljs;
 
 
 /***/ }),
-/* 416 */
+/* 418 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/*
@@ -40622,7 +41084,7 @@
 
 
 /***/ }),
-/* 417 */
+/* 419 */
 /***/ (function(module, exports) {
 
 	module.exports = function(hljs) {
@@ -40739,7 +41201,7 @@
 	};
 
 /***/ }),
-/* 418 */
+/* 420 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* jshint node: true, esnext: true */
@@ -40852,7 +41314,7 @@
 	exports.default = MarkdownTitle;
 
 /***/ }),
-/* 419 */
+/* 421 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -40871,11 +41333,11 @@
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _markdown = __webpack_require__(413);
+	var _markdown = __webpack_require__(415);
 
 	var _markdown2 = _interopRequireDefault(_markdown);
 
-	var _Code = __webpack_require__(420);
+	var _Code = __webpack_require__(422);
 
 	var _Code2 = _interopRequireDefault(_Code);
 
@@ -40956,7 +41418,7 @@
 	exports.default = Markdown;
 
 /***/ }),
-/* 420 */
+/* 422 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -40975,15 +41437,15 @@
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _markdown = __webpack_require__(413);
+	var _markdown = __webpack_require__(415);
 
 	var _markdown2 = _interopRequireDefault(_markdown);
 
-	var _reactContext = __webpack_require__(421);
+	var _reactContext = __webpack_require__(423);
 
 	var _reactContext2 = _interopRequireDefault(_reactContext);
 
-	var _reactMaterialDesign = __webpack_require__(373);
+	var _reactMaterialDesign = __webpack_require__(378);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -41115,7 +41577,7 @@
 	exports.default = Code;
 
 /***/ }),
-/* 421 */
+/* 423 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* jshint node: true, esnext: true, browser: true */
@@ -41351,7 +41813,7 @@
 	module.exports = context;
 
 /***/ }),
-/* 422 */
+/* 424 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* jshint node: true, esnext: true */
@@ -41371,13 +41833,13 @@
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _markdown = __webpack_require__(413);
+	var _markdown = __webpack_require__(415);
 
 	var _markdown2 = _interopRequireDefault(_markdown);
 
-	var _reactMaterialDesign = __webpack_require__(373);
+	var _reactMaterialDesign = __webpack_require__(378);
 
-	var _SidebarItem = __webpack_require__(423);
+	var _SidebarItem = __webpack_require__(425);
 
 	var _SidebarItem2 = _interopRequireDefault(_SidebarItem);
 
@@ -41472,7 +41934,7 @@
 	exports.default = Sidebar;
 
 /***/ }),
-/* 423 */
+/* 425 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* jshint node: true, esnext: true */
@@ -41492,7 +41954,7 @@
 
 	var _reactcss2 = _interopRequireDefault(_reactcss);
 
-	var _reactMaterialDesign = __webpack_require__(373);
+	var _reactMaterialDesign = __webpack_require__(378);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -41576,108 +42038,108 @@
 	exports.default = SidebarItem;
 
 /***/ }),
-/* 424 */
+/* 426 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
 	/* eslint-disable global-require */
 	module.exports = {
-	  '01-about': __webpack_require__(425),
-	  '02-getting-started': __webpack_require__(426),
-	  '02.01-install': __webpack_require__(427),
-	  '02.02-include': __webpack_require__(428),
-	  '03-api': __webpack_require__(429),
-	  '03.01-color': __webpack_require__(430),
-	  '03.02-onChange': __webpack_require__(431),
-	  '03.03-onChangeComplete': __webpack_require__(432),
-	  '03.04-individual': __webpack_require__(433),
-	  '04-create': __webpack_require__(434),
-	  '04.01-parent': __webpack_require__(435),
-	  '04.02-helpers': __webpack_require__(436),
-	  '05-examples': __webpack_require__(437)
+	  '01-about': __webpack_require__(427),
+	  '02-getting-started': __webpack_require__(428),
+	  '02.01-install': __webpack_require__(429),
+	  '02.02-include': __webpack_require__(430),
+	  '03-api': __webpack_require__(431),
+	  '03.01-color': __webpack_require__(432),
+	  '03.02-onChange': __webpack_require__(433),
+	  '03.03-onChangeComplete': __webpack_require__(434),
+	  '03.04-individual': __webpack_require__(435),
+	  '04-create': __webpack_require__(436),
+	  '04.01-parent': __webpack_require__(437),
+	  '04.02-helpers': __webpack_require__(438),
+	  '05-examples': __webpack_require__(439)
 	};
-
-/***/ }),
-/* 425 */
-/***/ (function(module, exports) {
-
-	module.exports = "---\nid: about\ntitle: About\n---\n\n**13 Different Pickers** - Sketch, Photoshop, Chrome and many more\n\n**Make Your Own** - Use the building block components to make your own\n";
-
-/***/ }),
-/* 426 */
-/***/ (function(module, exports) {
-
-	module.exports = "---\nid: getting-started\ntitle: Getting Started\n---\n";
 
 /***/ }),
 /* 427 */
 /***/ (function(module, exports) {
 
-	module.exports = "---\nid: usage-install\ntitle: Install\n---\nStart by installing `react-color` via npm:\n```\nnpm install react-color --save\n```\n";
+	module.exports = "---\nid: about\ntitle: About\n---\n\n**13 Different Pickers** - Sketch, Photoshop, Chrome and many more\n\n**Make Your Own** - Use the building block components to make your own\n";
 
 /***/ }),
 /* 428 */
 /***/ (function(module, exports) {
 
-	module.exports = "---\nid: usage-include\ntitle: Include Component\n---\nImport a color picker from `react-color` at the top of a component and then use it in the render function:\n```\nimport React from 'react';\nimport { SketchPicker } from 'react-color';\n\nclass Component extends React.Component {\n\n  render() {\n    return <SketchPicker />;\n  }\n}\n```\nYou can import `AlphaPicker` `BlockPicker` `ChromePicker` `CirclePicker` `CompactPicker` `GithubPicker` `HuePicker` `MaterialPicker` `PhotoshopPicker` `SketchPicker` `SliderPicker` `SwatchesPicker` `TwitterPicker` respectively.\n";
+	module.exports = "---\nid: getting-started\ntitle: Getting Started\n---\n";
 
 /***/ }),
 /* 429 */
 /***/ (function(module, exports) {
 
-	module.exports = "---\nid: api\ntitle: Component API\n---\n";
+	module.exports = "---\nid: usage-install\ntitle: Install\n---\nStart by installing `react-color` via npm:\n```\nnpm install react-color --save\n```\n";
 
 /***/ }),
 /* 430 */
 /***/ (function(module, exports) {
 
-	module.exports = "---\nid: api-color\ntitle: color\n---\nColor controls what color is active on the color picker. You can use this to initialize the color picker with a particular color, or to keep it in sync with the state of a parent component.\n\nColor accepts either a string of a hex color `'#333'` or a object of rgb or hsl values `{ r: 51, g: 51, b: 51 }` or `{ h: 0, s: 0, l: .10 }`. Both rgb and hsl will also take a `a: 1` value for alpha. You can also use `transparent`.\n\n```\nimport React from 'react';\nimport { SketchPicker } from 'react-color';\n\nclass Component extends React.Component {\n  state = {\n    background: '#fff',\n  };\n\n  handleChangeComplete = (color) => {\n    this.setState({ background: color.hex });\n  };\n\n  render() {\n    return (\n      <SketchPicker\n        color={ this.state.background }\n        onChangeComplete={ this.handleChangeComplete }\n      />\n    );\n  }\n}\n```\nIn this case, the color picker will initialize with the color `#fff`. When the color is changed, `handleChangeComplete` will fire and set the new color to state.\n";
+	module.exports = "---\nid: usage-include\ntitle: Include Component\n---\nImport a color picker from `react-color` at the top of a component and then use it in the render function:\n```\nimport React from 'react';\nimport { SketchPicker } from 'react-color';\n\nclass Component extends React.Component {\n\n  render() {\n    return <SketchPicker />;\n  }\n}\n```\nYou can import `AlphaPicker` `BlockPicker` `ChromePicker` `CirclePicker` `CompactPicker` `GithubPicker` `HuePicker` `MaterialPicker` `PhotoshopPicker` `SketchPicker` `SliderPicker` `SwatchesPicker` `TwitterPicker` respectively.\n";
 
 /***/ }),
 /* 431 */
 /***/ (function(module, exports) {
 
-	module.exports = "---\nid: api-onChange\ntitle: onChange\n---\nPass a function to call every time the color is changed. Use this to store the color in the state of a parent component or to make other transformations.\n\nKeep in mind this is called on drag events that can happen quite frequently. If you just need to get the color once use `onChangeComplete`.\n\n```\nimport React from 'react';\nimport { SwatchesPicker } from 'react-color';\n\nclass Component extends React.Component {\n\n  handleChange(color, event) {\n    // color = {\n    //   hex: '#333',\n    //   rgb: {\n    //     r: 51,\n    //     g: 51,\n    //     b: 51,\n    //     a: 1,\n    //   },\n    //   hsl: {\n    //     h: 0,\n    //     s: 0,\n    //     l: .20,\n    //     a: 1,\n    //   },\n    // }\n  }\n\n  render() {\n    return <SwatchesPicker onChange={ this.handleChange } />;\n  }\n}\n```\n";
+	module.exports = "---\nid: api\ntitle: Component API\n---\n";
 
 /***/ }),
 /* 432 */
 /***/ (function(module, exports) {
 
-	module.exports = "---\nid: api-onChangeComplete\ntitle: onChangeComplete\n---\nPass a function to call once a color change is complete.\n\n```\nimport React from 'react';\nimport { PhotoshopPicker } from 'react-color';\n\nclass Component extends React.Component {\n  state = {\n    background: '#fff',\n  };\n\n  handleChangeComplete = (color, event) => {\n    this.setState({ background: color.hex });\n  };\n\n  render() {\n    return <PhotoshopPicker onChangeComplete={ this.handleChangeComplete } />;\n  }\n}\n```\n";
+	module.exports = "---\nid: api-color\ntitle: color\n---\nColor controls what color is active on the color picker. You can use this to initialize the color picker with a particular color, or to keep it in sync with the state of a parent component.\n\nColor accepts either a string of a hex color `'#333'` or a object of rgb or hsl values `{ r: 51, g: 51, b: 51 }` or `{ h: 0, s: 0, l: .10 }`. Both rgb and hsl will also take a `a: 1` value for alpha. You can also use `transparent`.\n\n```\nimport React from 'react';\nimport { SketchPicker } from 'react-color';\n\nclass Component extends React.Component {\n  state = {\n    background: '#fff',\n  };\n\n  handleChangeComplete = (color) => {\n    this.setState({ background: color.hex });\n  };\n\n  render() {\n    return (\n      <SketchPicker\n        color={ this.state.background }\n        onChangeComplete={ this.handleChangeComplete }\n      />\n    );\n  }\n}\n```\nIn this case, the color picker will initialize with the color `#fff`. When the color is changed, `handleChangeComplete` will fire and set the new color to state.\n";
 
 /***/ }),
 /* 433 */
 /***/ (function(module, exports) {
 
-	module.exports = "---\nid: api-individual\ntitle: Individual APIs\n---\nSome pickers have specific APIs that are unique to themselves:\n\n### <Alpha />\n* **width** - String, Pixel value for picker width. Default `316px`\n* **height** - String, Pixel value for picker height. Default `16px`\n* **direction** - String Enum, `horizontal` or `vertical`. Default `horizontal`\n* **renderers** - Object, Use { canvas: Canvas } with node canvas to do SSR\n* **pointer** - React Component, Custom pointer component\n\n### <Block />\n* **width** - String, Pixel value for picker width. Default `170px`\n* **colors** - Array of Strings, Color squares to display. Default `['#D9E3F0', '#F47373', '#697689', '#37D67A', '#2CCCE4', '#555555', '#dce775', '#ff8a65', '#ba68c8']`\n* **triangle** - String, Either `hide` or `top`. Default `top`\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Chrome />\n* **disableAlpha** - Bool, Remove alpha slider and options from picker. Default `false`\n* **renderers** - Object, Use { canvas: Canvas } with node canvas to do SSR\n\n### <Circle />\n* **width** - String, Pixel value for picker width. Default `252px`\n* **colors** - Array of Strings, Color squares to display. Default `[\"#f44336\", \"#e91e63\", \"#9c27b0\", \"#673ab7\", \"#3f51b5\", \"#2196f3\", \"#03a9f4\", \"#00bcd4\", \"#009688\", \"#4caf50\", \"#8bc34a\", \"#cddc39\", \"#ffeb3b\", \"#ffc107\", \"#ff9800\", \"#ff5722\", \"#795548\", \"#607d8b\"]`\n* **circleSize** - Number, Value for circle size. Default `28`\n* **circleSpacing** - Number, Value for spacing between circles. Default `14`\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Compact />\n* **colors** - Array of Strings, Color squares to display. Default `['#4D4D4D', '#999999', '#FFFFFF', '#F44E3B', '#FE9200', '#FCDC00', '#DBDF00', '#A4DD00', '#68CCCA', '#73D8FF', '#AEA1FF', '#FDA1FF', '#333333', '#808080', '#cccccc', '#D33115', '#E27300', '#FCC400', '#B0BC00', '#68BC00', '#16A5A5', '#009CE0', '#7B64FF', '#FA28FF', '#000000', '#666666', '#B3B3B3', '#9F0500', '#C45100', '#FB9E00', '#808900', '#194D33', '#0C797D', '#0062B1', '#653294', '#AB149E']`\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Github />\n* **width** - String, Pixel value for picker width. Default `200px`\n* **colors** - Array of Strings, Color squares to display. Default `['#B80000', '#DB3E00', '#FCCB00', '#008B02', '#006B76', '#1273DE', '#004DCF', '#5300EB', '#EB9694', '#FAD0C3', '#FEF3BD', '#C1E1C5', '#BEDADC', '#C4DEF6', '#BED3F3', '#D4C4FB']`\n* **triangle** - String, Either `hide`, `top-left` or `top-right`. Default `top-left`\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Hue />\n* **width** - String, Pixel value for picker width. Default `316px`\n* **height** - String, Pixel value for picker height. Default `16px`\n* **direction** - String Enum, `horizontal` or `vertical`. Default `horizontal`\n* **pointer** - React Component, Custom pointer component\n\n### <Photoshop />\n* **header** - String, Title text. Default `Color Picker`\n* **onAccept** - Function, Callback for when accept is clicked.\n* **onCancel** - Function, Callback for when cancel is clicked.\n\n### <Sketch />\n* **disableAlpha** - Bool, Remove alpha slider and options from picker. Default `false`\n* **presetColors** - Array of Strings or Objects, Hex strings for default colors at bottom of picker. Default `['#D0021B', '#F5A623', '#F8E71C', '#8B572A', '#7ED321', '#417505', '#BD10E0', '#9013FE', '#4A90E2', '#50E3C2', '#B8E986', '#000000', '#4A4A4A', '#9B9B9B', '#FFFFFF']`\n> **presetColors** may also be described as an array of objects with `color` and `title` properties: `[{ color: '#f00', title: 'red' }]` or a combination of both\n* **width** - Number, Width of picker. Default `200`\n* **renderers** - Object, Use { canvas: Canvas } with node canvas to do SSR\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Slider />\n* **pointer** - React Component, Custom pointer component\n\n### <Swatches />\n* **width** - Number, Pixel value for picker width. Default `320`\n* **height** - Number, Pixel value for picker height. Default `240`\n* **colors** - Array of Arrays of Strings, An array of color groups, each with an array of colors\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Twitter />\n* **width** - String, Pixel value for picker width. Default `276px`\n* **colors** - Array of Strings, Color squares to display. Default `['#FF6900', '#FCB900', '#7BDCB5', '#00D084', '#8ED1FC', '#0693E3', '#ABB8C3', '#EB144C', '#F78DA7', '#9900EF']`\n* **triangle** - String, Either `hide`, `top-left` or `top-right`. Default `top-left`\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n";
+	module.exports = "---\nid: api-onChange\ntitle: onChange\n---\nPass a function to call every time the color is changed. Use this to store the color in the state of a parent component or to make other transformations.\n\nKeep in mind this is called on drag events that can happen quite frequently. If you just need to get the color once use `onChangeComplete`.\n\n```\nimport React from 'react';\nimport { SwatchesPicker } from 'react-color';\n\nclass Component extends React.Component {\n\n  handleChange(color, event) {\n    // color = {\n    //   hex: '#333',\n    //   rgb: {\n    //     r: 51,\n    //     g: 51,\n    //     b: 51,\n    //     a: 1,\n    //   },\n    //   hsl: {\n    //     h: 0,\n    //     s: 0,\n    //     l: .20,\n    //     a: 1,\n    //   },\n    // }\n  }\n\n  render() {\n    return <SwatchesPicker onChange={ this.handleChange } />;\n  }\n}\n```\n";
 
 /***/ }),
 /* 434 */
 /***/ (function(module, exports) {
 
-	module.exports = "---\nid: create\ntitle: Create Your Own\n---\n";
+	module.exports = "---\nid: api-onChangeComplete\ntitle: onChangeComplete\n---\nPass a function to call once a color change is complete.\n\n```\nimport React from 'react';\nimport { PhotoshopPicker } from 'react-color';\n\nclass Component extends React.Component {\n  state = {\n    background: '#fff',\n  };\n\n  handleChangeComplete = (color, event) => {\n    this.setState({ background: color.hex });\n  };\n\n  render() {\n    return <PhotoshopPicker onChangeComplete={ this.handleChangeComplete } />;\n  }\n}\n```\n";
 
 /***/ }),
 /* 435 */
 /***/ (function(module, exports) {
 
-	module.exports = "---\nid: create-parent\ntitle: Parent Component\n---\nTo make a custom color picker, create a top-level component that will act as the bridge with the `CustomPicker` high order component. Wrap the export with the CustomPicker function:\n\n```\nimport React from 'react';\nimport { CustomPicker } from 'react-color';\n\nclass MyColorPicker extends React.Component {\n  render() {\n    return <div>MyColorPicker</div>;\n  }\n}\n\nexport default CustomPicker(MyColorPicker);\n```\n\nThis component will be passed `hex`, `rgb` and `hsl` values as props for the current color. It is also provided an `onChange` prop that should be called to propagate a new color. Pass it a hex string, or an rgb or hsl object.\n";
+	module.exports = "---\nid: api-individual\ntitle: Individual APIs\n---\nSome pickers have specific APIs that are unique to themselves:\n\n### <Alpha />\n* **width** - String, Pixel value for picker width. Default `316px`\n* **height** - String, Pixel value for picker height. Default `16px`\n* **direction** - String Enum, `horizontal` or `vertical`. Default `horizontal`\n* **renderers** - Object, Use { canvas: Canvas } with node canvas to do SSR\n* **pointer** - React Component, Custom pointer component\n\n### <Block />\n* **width** - String, Pixel value for picker width. Default `170px`\n* **colors** - Array of Strings, Color squares to display. Default `['#D9E3F0', '#F47373', '#697689', '#37D67A', '#2CCCE4', '#555555', '#dce775', '#ff8a65', '#ba68c8']`\n* **triangle** - String, Either `hide` or `top`. Default `top`\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Chrome />\n* **disableAlpha** - Bool, Remove alpha slider and options from picker. Default `false`\n* **renderers** - Object, Use { canvas: Canvas } with node canvas to do SSR\n\n### <Circle />\n* **width** - String, Pixel value for picker width. Default `252px`\n* **colors** - Array of Strings, Color squares to display. Default `[\"#f44336\", \"#e91e63\", \"#9c27b0\", \"#673ab7\", \"#3f51b5\", \"#2196f3\", \"#03a9f4\", \"#00bcd4\", \"#009688\", \"#4caf50\", \"#8bc34a\", \"#cddc39\", \"#ffeb3b\", \"#ffc107\", \"#ff9800\", \"#ff5722\", \"#795548\", \"#607d8b\"]`\n* **circleSize** - Number, Value for circle size. Default `28`\n* **circleSpacing** - Number, Value for spacing between circles. Default `14`\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Compact />\n* **colors** - Array of Strings, Color squares to display. Default `['#4D4D4D', '#999999', '#FFFFFF', '#F44E3B', '#FE9200', '#FCDC00', '#DBDF00', '#A4DD00', '#68CCCA', '#73D8FF', '#AEA1FF', '#FDA1FF', '#333333', '#808080', '#cccccc', '#D33115', '#E27300', '#FCC400', '#B0BC00', '#68BC00', '#16A5A5', '#009CE0', '#7B64FF', '#FA28FF', '#000000', '#666666', '#B3B3B3', '#9F0500', '#C45100', '#FB9E00', '#808900', '#194D33', '#0C797D', '#0062B1', '#653294', '#AB149E']`\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Github />\n* **width** - String, Pixel value for picker width. Default `200px`\n* **colors** - Array of Strings, Color squares to display. Default `['#B80000', '#DB3E00', '#FCCB00', '#008B02', '#006B76', '#1273DE', '#004DCF', '#5300EB', '#EB9694', '#FAD0C3', '#FEF3BD', '#C1E1C5', '#BEDADC', '#C4DEF6', '#BED3F3', '#D4C4FB']`\n* **triangle** - String, Either `hide`, `top-left` or `top-right`. Default `top-left`\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Hue />\n* **width** - String, Pixel value for picker width. Default `316px`\n* **height** - String, Pixel value for picker height. Default `16px`\n* **direction** - String Enum, `horizontal` or `vertical`. Default `horizontal`\n* **pointer** - React Component, Custom pointer component\n\n### <Photoshop />\n* **header** - String, Title text. Default `Color Picker`\n* **onAccept** - Function, Callback for when accept is clicked.\n* **onCancel** - Function, Callback for when cancel is clicked.\n\n### <Sketch />\n* **disableAlpha** - Bool, Remove alpha slider and options from picker. Default `false`\n* **presetColors** - Array of Strings or Objects, Hex strings for default colors at bottom of picker. Default `['#D0021B', '#F5A623', '#F8E71C', '#8B572A', '#7ED321', '#417505', '#BD10E0', '#9013FE', '#4A90E2', '#50E3C2', '#B8E986', '#000000', '#4A4A4A', '#9B9B9B', '#FFFFFF']`\n> **presetColors** may also be described as an array of objects with `color` and `title` properties: `[{ color: '#f00', title: 'red' }]` or a combination of both\n* **width** - Number, Width of picker. Default `200`\n* **renderers** - Object, Use { canvas: Canvas } with node canvas to do SSR\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Slider />\n* **pointer** - React Component, Custom pointer component\n\n### <Swatches />\n* **width** - Number, Pixel value for picker width. Default `320`\n* **height** - Number, Pixel value for picker height. Default `240`\n* **colors** - Array of Arrays of Strings, An array of color groups, each with an array of colors\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n\n### <Twitter />\n* **width** - String, Pixel value for picker width. Default `276px`\n* **colors** - Array of Strings, Color squares to display. Default `['#FF6900', '#FCB900', '#7BDCB5', '#00D084', '#8ED1FC', '#0693E3', '#ABB8C3', '#EB144C', '#F78DA7', '#9900EF']`\n* **triangle** - String, Either `hide`, `top-left` or `top-right`. Default `top-left`\n* **onSwatchHover** - An event handler for `onMouseOver` on the `<Swatch>`s within this component. Gives the args `(color, event)`\n";
 
 /***/ }),
 /* 436 */
 /***/ (function(module, exports) {
 
-	module.exports = "---\nid: create-helpers\ntitle: Helper Components\n---\nEvery color picker provided is made up of a collection of helper components. Those components are accessible for you to use to make a custom color picker.\n\n### <Alpha />\nUse Alpha to display a slider to toggle the alpha value. Make sure to wrap it in a div that's the size you want the slider to be and that it is `position: relative`.\n\n* **...this.props** - Pass down all the color props from your top-most component.\n* **pointer** - Define a custom pointer component for the slider pointer.\n* **onChange** - Function callback. Make sure this calls the onChange function of the parent to make it change.\n```\nvar { Alpha } = require('react-color/lib/components/common');\n\n<Alpha\n  {...this.props}\n  pointer={ CustomPointer }\n  onChange={ this.handleChange } />\n```\n\n\n### <EditableInput />\nUse EditableInput to display an input / label that acts as the single source of truth until the input is blurred.  \n\n* **label** - Used to put a label on the input.\n* **value** - The value to be passed down to the input.\n* **onChange** - Function callback. Use this to call the onChange function of the parent. Returns an object where the key is the label and the value is the new value.\n* **style** - Inline css to style the children elements: `{ wrap: {}, input: {}, label: {} }`\n\n```\nvar { EditableInput } = require('react-color/lib/components/common');\n\nvar inputStyles = {\n  input: {\n    border: none,\n  },\n  label: {\n    fontSize: '12px',\n    color: '#999',\n  },\n};\n\n<EditableInput\n  style={ inputStyles }\n  label=\"hex\"\n  value={ this.props.hex }\n  onChange={ this.handleChange } />\n```\n\n### <Hue />\nUse Hue to display a slider to toggle the hue value. Make sure to wrap it in a div that's the size you want the slider to be and that it is `position: relative`.\n\n* **...this.props** - Pass down all the color props from your top-most component.\n* **pointer** - Define a custom pointer component for the slider pointer.\n* **onChange** - Function callback. Make sure this calls the onChange function of the parent to make it change.\n* **direction** - Display direction of the slider. Horizontal by default.\n```\nvar { Hue } = require('react-color/lib/components/common');\n\n<Hue\n  {...this.props}\n  pointer={ CustomPointer }\n  onChange={ this.handleChange }\n  direction={ 'horizontal' || 'vertical' } />\n```\n\n### <Saturation />\nUse Saturation to display a saturation block that users can drag to change the value. Make sure to wrap it in a div that's the size you want the block to be and that it is `position: relative`.\n\n* **...this.props** - Pass down all the color props from your top-most component.\n* **pointer** - Define a custom pointer component for the slider pointer.\n* **onChange** - Function callback. Make sure this calls the onChange function of the parent to make it change.\n```\nvar { Saturation } = require('react-color/lib/components/common');\n\n<Saturation\n  {...this.props}\n  pointer={ CustomPointer }\n  onChange={ this.handleChange }  />\n```\n\n### <Checkboard />\nThe Checkboard component renders a background of black / white checkerboard for use when displaying gradients or alpha. Make sure to wrap it in a div that's the size you want the block to be and that it is `position: relative`.\n\n* **size** - Number, Size of squares. Default `8`\n* **white** - String, Color of white squares. Default `transparent`\n* **grey** - String, Color of grey squares. Default `rgba(0,0,0,.08)`\n```\nvar { Checkboard } = require('react-color/lib/components/common');\n\n<Checkboard\n  size={ 12 }\n  white=\"#fff\"\n  grey=\"#333\"  />\n```\n";
+	module.exports = "---\nid: create\ntitle: Create Your Own\n---\n";
 
 /***/ }),
 /* 437 */
 /***/ (function(module, exports) {
 
-	module.exports = "---\nid: examples\ntitle: More Examples\n---\n";
+	module.exports = "---\nid: create-parent\ntitle: Parent Component\n---\nTo make a custom color picker, create a top-level component that will act as the bridge with the `CustomPicker` high order component. Wrap the export with the CustomPicker function:\n\n```\nimport React from 'react';\nimport { CustomPicker } from 'react-color';\n\nclass MyColorPicker extends React.Component {\n  render() {\n    return <div>MyColorPicker</div>;\n  }\n}\n\nexport default CustomPicker(MyColorPicker);\n```\n\nThis component will be passed `hex`, `rgb` and `hsl` values as props for the current color. It is also provided an `onChange` prop that should be called to propagate a new color. Pass it a hex string, or an rgb or hsl object.\n";
 
 /***/ }),
 /* 438 */
+/***/ (function(module, exports) {
+
+	module.exports = "---\nid: create-helpers\ntitle: Helper Components\n---\nEvery color picker provided is made up of a collection of helper components. Those components are accessible for you to use to make a custom color picker.\n\n### <Alpha />\nUse Alpha to display a slider to toggle the alpha value. Make sure to wrap it in a div that's the size you want the slider to be and that it is `position: relative`.\n\n* **...this.props** - Pass down all the color props from your top-most component.\n* **pointer** - Define a custom pointer component for the slider pointer.\n* **onChange** - Function callback. Make sure this calls the onChange function of the parent to make it change.\n```\nvar { Alpha } = require('react-color/lib/components/common');\n\n<Alpha\n  {...this.props}\n  pointer={ CustomPointer }\n  onChange={ this.handleChange } />\n```\n\n\n### <EditableInput />\nUse EditableInput to display an input / label that acts as the single source of truth until the input is blurred.  \n\n* **label** - Used to put a label on the input.\n* **value** - The value to be passed down to the input.\n* **onChange** - Function callback. Use this to call the onChange function of the parent. Returns an object where the key is the label and the value is the new value.\n* **style** - Inline css to style the children elements: `{ wrap: {}, input: {}, label: {} }`\n\n```\nvar { EditableInput } = require('react-color/lib/components/common');\n\nvar inputStyles = {\n  input: {\n    border: none,\n  },\n  label: {\n    fontSize: '12px',\n    color: '#999',\n  },\n};\n\n<EditableInput\n  style={ inputStyles }\n  label=\"hex\"\n  value={ this.props.hex }\n  onChange={ this.handleChange } />\n```\n\n### <Hue />\nUse Hue to display a slider to toggle the hue value. Make sure to wrap it in a div that's the size you want the slider to be and that it is `position: relative`.\n\n* **...this.props** - Pass down all the color props from your top-most component.\n* **pointer** - Define a custom pointer component for the slider pointer.\n* **onChange** - Function callback. Make sure this calls the onChange function of the parent to make it change.\n* **direction** - Display direction of the slider. Horizontal by default.\n```\nvar { Hue } = require('react-color/lib/components/common');\n\n<Hue\n  {...this.props}\n  pointer={ CustomPointer }\n  onChange={ this.handleChange }\n  direction={ 'horizontal' || 'vertical' } />\n```\n\n### <Saturation />\nUse Saturation to display a saturation block that users can drag to change the value. Make sure to wrap it in a div that's the size you want the block to be and that it is `position: relative`.\n\n* **...this.props** - Pass down all the color props from your top-most component.\n* **pointer** - Define a custom pointer component for the slider pointer.\n* **onChange** - Function callback. Make sure this calls the onChange function of the parent to make it change.\n```\nvar { Saturation } = require('react-color/lib/components/common');\n\n<Saturation\n  {...this.props}\n  pointer={ CustomPointer }\n  onChange={ this.handleChange }  />\n```\n\n### <Checkboard />\nThe Checkboard component renders a background of black / white checkerboard for use when displaying gradients or alpha. Make sure to wrap it in a div that's the size you want the block to be and that it is `position: relative`.\n\n* **size** - Number, Size of squares. Default `8`\n* **white** - String, Color of white squares. Default `transparent`\n* **grey** - String, Color of grey squares. Default `rgba(0,0,0,.08)`\n```\nvar { Checkboard } = require('react-color/lib/components/common');\n\n<Checkboard\n  size={ 12 }\n  white=\"#fff\"\n  grey=\"#333\"  />\n```\n";
+
+/***/ }),
+/* 439 */
+/***/ (function(module, exports) {
+
+	module.exports = "---\nid: examples\ntitle: More Examples\n---\n";
+
+/***/ }),
+/* 440 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -41690,19 +42152,19 @@
 	  return obj && obj.__esModule ? obj : { 'default': obj };
 	}
 
-	var _Button = __webpack_require__(439);
+	var _Button = __webpack_require__(441);
 
 	var _Button2 = _interopRequireDefault(_Button);
 
-	var _buttonMd = __webpack_require__(440);
+	var _buttonMd = __webpack_require__(442);
 
 	var _buttonMd2 = _interopRequireDefault(_buttonMd);
 
-	var _Sketch = __webpack_require__(441);
+	var _Sketch = __webpack_require__(443);
 
 	var _Sketch2 = _interopRequireDefault(_Sketch);
 
-	var _sketchMd = __webpack_require__(442);
+	var _sketchMd = __webpack_require__(444);
 
 	var _sketchMd2 = _interopRequireDefault(_sketchMd);
 
@@ -41712,7 +42174,7 @@
 	exports.sketchmd = _sketchMd2['default'];
 
 /***/ }),
-/* 439 */
+/* 441 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -41798,13 +42260,13 @@
 	exports.default = ButtonExample;
 
 /***/ }),
-/* 440 */
+/* 442 */
 /***/ (function(module, exports) {
 
 	module.exports = "```\n'use strict'\n\nimport React from 'react'\nimport { ChromePicker } from 'react-color'\n\nclass ButtonExample extends React.Component {\n  state = {\n    displayColorPicker: false,\n  };\n\n  handleClick = () => {\n    this.setState({ displayColorPicker: !this.state.displayColorPicker })\n  };\n\n  handleClose = () => {\n    this.setState({ displayColorPicker: false })\n  };\n\n  render() {\n    const popover = {\n      position: 'absolute',\n      zIndex: '2',\n    }\n    const cover = {\n      position: 'fixed',\n      top: '0px',\n      right: '0px',\n      bottom: '0px',\n      left: '0px',\n    }\n    return (\n      <div>\n        <button onClick={ this.handleClick }>Pick Color</button>\n        { this.state.displayColorPicker ? <div style={ popover }>\n          <div style={ cover } onClick={ this.handleClose }/>\n          <ChromePicker />\n        </div> : null }\n      </div>\n    )\n  }\n}\n\nexport default ButtonExample\n```\n";
 
 /***/ }),
-/* 441 */
+/* 443 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -41921,13 +42383,13 @@
 	exports.default = SketchExample;
 
 /***/ }),
-/* 442 */
+/* 444 */
 /***/ (function(module, exports) {
 
 	module.exports = "```\n'use strict'\n\nimport React from 'react'\nimport reactCSS from 'reactcss'\nimport { SketchPicker } from 'react-color'\n\nclass SketchExample extends React.Component {\n  state = {\n    displayColorPicker: false,\n    color: {\n      r: '241',\n      g: '112',\n      b: '19',\n      a: '1',\n    },\n  };\n\n  handleClick = () => {\n    this.setState({ displayColorPicker: !this.state.displayColorPicker })\n  };\n\n  handleClose = () => {\n    this.setState({ displayColorPicker: false })\n  };\n\n  handleChange = (color) => {\n    this.setState({ color: color.rgb })\n  };\n\n  render() {\n\n    const styles = reactCSS({\n      'default': {\n        color: {\n          width: '36px',\n          height: '14px',\n          borderRadius: '2px',\n          background: `rgba(${ this.state.color.r }, ${ this.state.color.g }, ${ this.state.color.b }, ${ this.state.color.a })`,\n        },\n        swatch: {\n          padding: '5px',\n          background: '#fff',\n          borderRadius: '1px',\n          boxShadow: '0 0 0 1px rgba(0,0,0,.1)',\n          display: 'inline-block',\n          cursor: 'pointer',\n        },\n        popover: {\n          position: 'absolute',\n          zIndex: '2',\n        },\n        cover: {\n          position: 'fixed',\n          top: '0px',\n          right: '0px',\n          bottom: '0px',\n          left: '0px',\n        },\n      },\n    });\n\n    return (\n      <div>\n        <div style={ styles.swatch } onClick={ this.handleClick }>\n          <div style={ styles.color } />\n        </div>\n        { this.state.displayColorPicker ? <div style={ styles.popover }>\n          <div style={ styles.cover } onClick={ this.handleClose }/>\n          <SketchPicker color={ this.state.color } onChange={ this.handleChange } />\n        </div> : null }\n\n      </div>\n    )\n  }\n}\n\nexport default SketchExample\n```\n";
 
 /***/ }),
-/* 443 */
+/* 445 */
 /***/ (function(module, exports, __webpack_require__, __webpack_module_template_argument_0__) {
 
 	/**
